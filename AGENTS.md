@@ -51,6 +51,32 @@ Important proposal alignment: the original `PROJECT_PROPOSAL.md` Week 5 goal sti
 - Restrict the public Mapbox token in Mapbox account settings to local/dev and Vercel domains.
 - YouTube search must be cached and quota-aware. Friendly quota limit UI, never a crash.
 
+## Progress (last updated 2026-04-29)
+
+**Completed**
+- Phase −1 — git baseline commit `249305e`. `main` initialized with twelve files (app, public, configs, proposal, AGENTS.md, .gitignore). No remote yet — pushing to GitHub + connecting Vercel is a user action.
+- Phase 0 Commit A — TypeScript migration commit `9d3f4c8`. Added strict `tsconfig.json` (allowJs eventually flipped to false). Renamed `app/{layout,page,upload/page}.jsx` → `.tsx`. Typed `RootLayout`'s `children` prop. `npm run build` is clean.
+
+**In progress / next**
+- Phase 0 Commit B — Clerk auth skeleton. **Blocked on user action**: a paused `npm install @clerk/nextjs` was interrupted. To resume, install Clerk + Supabase deps and proceed per the spec below.
+
+**Blocked on user (external setup)**
+- Push `main` to a new GitHub repo and connect Vercel to it.
+- Create the Clerk application (gives `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`).
+- Create the Supabase project + enable Clerk native third-party auth (gives `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`).
+- Create a YouTube Data API key (gives `YOUTUBE_API_KEY`).
+- Create a Mapbox account, public token restricted to localhost + Vercel domains (gives `NEXT_PUBLIC_MAPBOX_TOKEN`).
+- Populate `.env.local` once those values are available; mirror in Vercel project envs.
+
+**Resume checklist for the next session**
+1. Confirm git log starts with `9d3f4c8 chore(ts): migrate scaffold to TypeScript`.
+2. `npm install @clerk/nextjs` (the interrupted install).
+3. Add `proxy.ts` per the snippet in Phase 0 below; wrap `RootLayout` body in `<ClerkProvider>`; create `app/sign-in/[[...sign-in]]/page.tsx` and `app/sign-up/[[...sign-up]]/page.tsx`; replace landing CTAs with `<SignedOut>`/`<SignedIn>` Link pairs (sign-up vs library).
+4. Commit B as a focused commit, then continue with Commit C (Supabase clients).
+5. Add `.env.example` (committed) listing the eight env var names with empty values; user fills `.env.local` from there.
+
+---
+
 ## Phase -1: Git Baseline
 
 Goal: establish a clean baseline commit before implementation.
