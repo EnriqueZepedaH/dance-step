@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { Fraunces, Newsreader, DM_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 
@@ -30,13 +32,13 @@ const instrumentSerif = Instrument_Serif({
   display: "swap",
 });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "DanceStep — A Hub for Latin Dancers",
   description:
     "Search and save dance videos, discover the local scene, and break down Cuban Casino choreography move by move.",
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
