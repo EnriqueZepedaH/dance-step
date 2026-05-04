@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight, Bookmark, Compass, MapPin, Sparkles } from "lucide-react";
+import { Show, SignInButton, UserButton } from "@clerk/nextjs";
 
 const marqueeMoves = [
   "Guapea",
@@ -52,10 +53,22 @@ export default function Home() {
           <a href="#manifesto">Manifesto</a>
         </nav>
 
-        <Link className="btn" href="/upload">
-          Enter the Floor
-          <ArrowUpRight size={16} strokeWidth={1.6} />
-        </Link>
+        <div className="header-auth">
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <button className="btn" type="button">
+                Enter the Floor
+                <ArrowUpRight size={16} strokeWidth={1.6} />
+              </button>
+            </SignInButton>
+          </Show>
+          <Show when="signed-in">
+            <Link className="btn btn-ghost" href="/library">
+              Library
+            </Link>
+            <UserButton />
+          </Show>
+        </div>
       </header>
 
       {/* ============ HERO ============ */}
@@ -79,10 +92,18 @@ export default function Home() {
           </p>
 
           <div className="hero-actions reveal d-4">
-            <Link className="btn" href="/upload">
-              Enter the Floor
-              <ArrowUpRight size={16} strokeWidth={1.6} />
-            </Link>
+            <Show when="signed-out">
+              <Link className="btn" href="/sign-up">
+                Enter the Floor
+                <ArrowUpRight size={16} strokeWidth={1.6} />
+              </Link>
+            </Show>
+            <Show when="signed-in">
+              <Link className="btn" href="/library">
+                Open the Library
+                <ArrowUpRight size={16} strokeWidth={1.6} />
+              </Link>
+            </Show>
             <a className="btn btn-ghost" href="#rooms">
               The three rooms
             </a>
@@ -315,10 +336,18 @@ export default function Home() {
           The library, the map, and the lab — one place, one account, no Tuesdays required.
         </p>
         <div className="actions reveal d-4">
-          <Link className="btn" href="/upload">
-            Enter the Floor
-            <ArrowUpRight size={16} strokeWidth={1.6} />
-          </Link>
+          <Show when="signed-out">
+            <Link className="btn" href="/sign-up">
+              Enter the Floor
+              <ArrowUpRight size={16} strokeWidth={1.6} />
+            </Link>
+          </Show>
+          <Show when="signed-in">
+            <Link className="btn" href="/library">
+              Open the Library
+              <ArrowUpRight size={16} strokeWidth={1.6} />
+            </Link>
+          </Show>
           <a className="btn btn-ghost" href="#rooms">
             <Compass size={16} strokeWidth={1.6} />
             Tour the rooms

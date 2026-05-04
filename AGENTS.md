@@ -127,6 +127,7 @@ Commit B: Clerk auth skeleton.
 - Add Clerk sign-in and sign-up pages:
   - `app/sign-in/[[...sign-in]]/page.tsx`
   - `app/sign-up/[[...sign-up]]/page.tsx`
+- **Clerk v7 API note:** `<SignedIn>` / `<SignedOut>` were dropped — use `<Show when="signed-in">` and `<Show when="signed-out">` from `@clerk/nextjs`. `<UserButton afterSignOutUrl="...">` was also dropped; configure post-sign-out redirect via `ClerkProvider`/env if needed.
 - Add `proxy.ts` with explicit route gating:
 
 ```ts
