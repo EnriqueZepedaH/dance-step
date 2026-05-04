@@ -168,13 +168,13 @@ Commit C: Supabase clients.
 - Server client should pass Clerk's session token through Supabase's `accessToken` callback.
 - Service-role client belongs only in `lib/supabase/admin.ts`.
 
-Required env vars:
+Required env vars (lives at `apps/web/.env.local`; template at `apps/web/.env.example`):
 
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
 - `CLERK_WEBHOOK_SECRET`
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (Supabase's new name for the legacy anon key — `sb_publishable_*`)
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `YOUTUBE_API_KEY`
 - `NEXT_PUBLIC_MAPBOX_TOKEN`
