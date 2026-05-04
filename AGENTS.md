@@ -1,5 +1,13 @@
 # AGENTS.md
 
+## Repository Layout
+
+This repository is a **monorepo**. The Next.js frontend lives at **`apps/web/`**. Future services (e.g., the deferred Lab pipeline) will land in sibling `apps/*` directories.
+
+When file paths appear in this document or in the v1 plan (`~/.claude/plans/purrfect-doodling-pearl.md`) — `app/...`, `lib/...`, `components/...`, `proxy.ts`, `package.json`, `tsconfig.json`, `next.config.mjs`, `.env.local`, `supabase/...` — read them as **relative to `apps/web/`**, not to the repo root. Root-level files are: `AGENTS.md`, `PROJECT_PROPOSAL.md`, `.gitignore`.
+
+Run `npm` commands (`install`, `run dev`, `run build`, `run lint`) from `apps/web/`. The `.env.local` file lives at `apps/web/.env.local`.
+
 ## Project Context
 
 DanceStep is a Next.js app for Latin dancers. It recently pivoted from a single-purpose Cuban Casino move analyzer into a broader v1 platform:
@@ -17,14 +25,16 @@ Important proposal alignment: the original `PROJECT_PROPOSAL.md` Week 5 goal sti
 - Framework: Next.js App Router.
 - Current installed versions include Next 16 and React 19. Use **`proxy.ts`**, not `middleware.ts`.
 - Styling is custom CSS in `app/globals.css`. Do not migrate to Tailwind unless explicitly requested.
-- Existing files:
-  - `app/page.jsx`
-  - `app/upload/page.jsx`
-  - `app/layout.jsx`
+- Existing files (under `apps/web/` unless noted):
+  - `app/page.tsx`
+  - `app/upload/page.tsx`
+  - `app/layout.tsx`
   - `app/globals.css`
-  - `PROJECT_PROPOSAL.md`
   - `package.json`
   - `next.config.mjs`
+  - `tsconfig.json`
+  - `PROJECT_PROPOSAL.md` (repo root)
+  - `AGENTS.md` (repo root)
 - `.gitignore` should ignore `node_modules/`, `.next/`, `out/`, env files, Vercel metadata, logs, caches, and local assistant metadata.
 
 ## Locked Decisions
@@ -58,7 +68,8 @@ Important proposal alignment: the original `PROJECT_PROPOSAL.md` Week 5 goal sti
 - Phase 0 Commit A — TypeScript migration commit `9d3f4c8`. Added strict `tsconfig.json` (allowJs eventually flipped to false). Renamed `app/{layout,page,upload/page}.jsx` → `.tsx`. Typed `RootLayout`'s `children` prop. `npm run build` is clean.
 
 **In progress / next**
-- Phase 0 Commit B — Clerk auth skeleton. **Blocked on user action**: a paused `npm install @clerk/nextjs` was interrupted. To resume, install Clerk + Supabase deps and proceed per the spec below.
+- Phase 0.5 — Monorepo restructure. The frontend was moved from the repo root into `apps/web/` in a focused commit. Run `npm` from `apps/web/` going forward.
+- Phase 0 Commit B — Clerk auth skeleton. **Blocked on user action**: a paused `npm install @clerk/nextjs` was interrupted. Resume from `apps/web/`: install Clerk + Supabase deps and proceed per the spec below.
 
 **Blocked on user (external setup)**
 - Push `main` to a new GitHub repo and connect Vercel to it.
