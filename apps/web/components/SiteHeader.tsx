@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { Show, SignInButton, UserButton } from "@clerk/nextjs";
+import { Show, UserButton } from "@clerk/nextjs";
 
 export type NavItem = { href: string; label: string };
 
@@ -50,12 +50,10 @@ export function SiteHeader({ variant = "landing", nav }: Props) {
 
       <div className="header-auth">
         <Show when="signed-out">
-          <SignInButton mode="modal">
-            <button className="btn" type="button">
-              Enter the Floor
-              <ArrowUpRight size={16} strokeWidth={1.6} />
-            </button>
-          </SignInButton>
+          <Link className="btn" href="/sign-in">
+            Enter the Floor
+            <ArrowUpRight size={16} strokeWidth={1.6} />
+          </Link>
         </Show>
         <Show when="signed-in">
           <Link className="btn btn-ghost" href="/library">
