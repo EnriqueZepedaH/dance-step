@@ -28,15 +28,12 @@ export async function ensureUser(): Promise<AppUser> {
     null;
 
   const admin = getSupabaseAdminClient();
-  const row = { id: userId, email, display_name: displayName };
-  // Cast through unknown until lib/db/types.ts is regenerated from the
-  // applied migration; the Supabase clients are currently untyped.
   const { data, error } = await admin
     .from("users")
-    .upsert(row as unknown as never, { onConflict: "id" })
+    .upsert({ id: userId, email, display_name: displayName }, { onConflict: "id" })
     .select("id, email, display_name, role")
     .single();
 
   if (error) throw error;
-  return data as unknown as AppUser;
+  return data;
 }
