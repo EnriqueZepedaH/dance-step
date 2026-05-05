@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowUpRight, Bookmark, Compass, MapPin, Sparkles } from "lucide-react";
-import { Show, SignInButton, UserButton } from "@clerk/nextjs";
+import { Show } from "@clerk/nextjs";
+import { SiteHeader } from "@/components/SiteHeader";
+import { Footer } from "@/components/Footer";
 
 const marqueeMoves = [
   "Guapea",
@@ -39,37 +41,7 @@ const upcomingEvents = [
 export default function Home() {
   return (
     <main>
-      <header className="site-header reveal d-1">
-        <Link className="brand" href="/">
-          <span className="brand-glyph">d</span>
-          <span>DanceStep</span>
-          <sup>est. 26</sup>
-        </Link>
-
-        <nav className="nav" aria-label="Main">
-          <a href="#library">Library</a>
-          <a href="#scene">The Scene</a>
-          <a href="#lab">The Lab</a>
-          <a href="#manifesto">Manifesto</a>
-        </nav>
-
-        <div className="header-auth">
-          <Show when="signed-out">
-            <SignInButton mode="modal">
-              <button className="btn" type="button">
-                Enter the Floor
-                <ArrowUpRight size={16} strokeWidth={1.6} />
-              </button>
-            </SignInButton>
-          </Show>
-          <Show when="signed-in">
-            <Link className="btn btn-ghost" href="/library">
-              Library
-            </Link>
-            <UserButton />
-          </Show>
-        </div>
-      </header>
+      <SiteHeader variant="landing" />
 
       {/* ============ HERO ============ */}
       <section className="hero">
@@ -355,37 +327,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ============ FOOTER ============ */}
-      <footer className="footer">
-        <div className="brand-block">
-          Dance<em>Step</em>.
-        </div>
-        <div className="meta">
-          <div>
-            <strong>Cities</strong>
-            <a href="#">Chicago</a><br />
-            <a href="#">— Havana (soon)</a><br />
-            <a href="#">— NYC (soon)</a>
-          </div>
-          <div>
-            <strong>Rooms</strong>
-            <a href="#library">Library</a><br />
-            <a href="#scene">The Scene</a><br />
-            <a href="#lab">The Lab</a>
-          </div>
-          <div>
-            <strong>About</strong>
-            <a href="#manifesto">Manifesto</a><br />
-            <a href="#">Privacy</a><br />
-            <a href="#">Contact</a>
-          </div>
-          <div>
-            <strong>© 2026</strong>
-            Made with cariño<br />
-            in Chicago.
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </main>
   );
 }

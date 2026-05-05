@@ -267,6 +267,21 @@ h2, h3, h4 { margin: 0; }
   gap: 12px;
 }
 
+.page-shell {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 96px 32px 160px;
+}
+.page-shell h1 {
+  margin: 16px 0 24px;
+}
+.page-shell .lede {
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--ink-mute, #4a3f33);
+  max-width: 56ch;
+}
+
 /* ============================================================
    Hero
    ============================================================ */
