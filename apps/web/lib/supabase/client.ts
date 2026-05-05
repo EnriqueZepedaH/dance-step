@@ -1,6 +1,6 @@
 "use client";
 
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { useSession } from "@clerk/nextjs";
 import { useMemo } from "react";
 
@@ -9,7 +9,7 @@ export function useSupabaseBrowserClient() {
 
   return useMemo(
     () =>
-      createBrowserClient(
+      createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
         {
