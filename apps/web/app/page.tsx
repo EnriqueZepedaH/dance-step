@@ -48,7 +48,7 @@ export default function Home() {
         <div>
           <div className="hero-meta reveal d-1">
             <span className="dot" />
-            <span className="mono">Vol. 01 · Spring '26 · Chicago Edition</span>
+            <span className="mono">Vol. 01 · Spring &rsquo;26 · Chicago Edition</span>
           </div>
 
           <h1 className="reveal d-2">
