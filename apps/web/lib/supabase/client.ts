@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { useSession } from "@clerk/nextjs";
 import { useMemo } from "react";
 import type { Database } from "@/lib/db/types";
+import { env } from "@/lib/env";
 
 export function useSupabaseBrowserClient() {
   const { session } = useSession();
@@ -11,8 +12,8 @@ export function useSupabaseBrowserClient() {
   return useMemo(
     () =>
       createClient<Database>(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+        env.NEXT_PUBLIC_SUPABASE_URL,
+        env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
         {
           accessToken: () => session?.getToken() ?? Promise.resolve(null),
         },

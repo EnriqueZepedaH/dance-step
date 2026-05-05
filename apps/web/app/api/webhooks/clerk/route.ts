@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { env } from "@/lib/env";
 
 // Public route (gated as such in proxy.ts). Verifies the Clerk-signed
 // Svix payload, then mirrors user state into Supabase via the service
@@ -23,13 +24,9 @@ function displayNameFor(u: Partial<ClerkUserData>): string | null {
 }
 
 export async function POST(req: Request) {
-  const secret = process.env.CLERK_WEBHOOK_SECRET;
-  if (!secret) {
-    return NextResponse.json(
-      { error: "CLERK_WEBHOOK_SECRET not configured" },
-      { status: 500 },
-    );
-  }
+  // env validation has already run at module load — CLERK_WEBHOOK_SECRET
+  // is guaranteed to be set or the import would have thrown.
+  const secret = env.CLERK_WEBHOOK_SECRET;
 
   const headers = {
     "svix-id": req.headers.get("svix-id") ?? "",
@@ -60,7 +57,7 @@ export async function POST(req: Request) {
     };
     const { error } = await admin
       .from("users")
-      .upsert(row as unknown as never, { onConflict: "id" });
+      .upsert(row, { onConflict: "id" });
     if (error) {
       console.error("clerk webhook upsert failed", error);
       return NextResponse.json({ error: "upsert failed" }, { status: 500 });
