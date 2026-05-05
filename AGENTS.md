@@ -8,6 +8,25 @@ When file paths appear in this document or in the v1 plan (`~/.claude/plans/purr
 
 Run `npm` commands (`install`, `run dev`, `run build`, `run lint`) from `apps/web/`. The `.env.local` file lives at `apps/web/.env.local`.
 
+## Repo Structure — Deferred Until Triggered
+
+The following monorepo conventions are **intentionally not adopted in v1**. Each one is real engineering value once a second consumer exists, but for a single-app repo they pay configuration tax (build/types/lint/paths) for benefits that don't activate yet. Pull each one forward only when its trigger fires; do not adopt preemptively.
+
+| Deferred | Adopt when (trigger) | Notes |
+|---|---|---|
+| **`packages/ui`** (extract design system) | A second app needs to render DanceStep components. | Today: one consumer (`apps/web`). Components live in `apps/web/components/`. Move to a workspace package only when the import graph crosses an app boundary. |
+| **`packages/db`** (Database type + query helpers) | A non-Next consumer needs DB access — e.g., a worker, an edge function outside Next, or `apps/mobile`. | Today: `apps/web/lib/db/types.ts` is the single source. Moving the file is mechanical when the trigger fires. |
+| **`packages/utils`** (shared helpers) | At least 2 packages would import the same helper. | Today: zero shared utils. `useDebouncedValue` will land in `apps/web/hooks/`. The first true cross-package helper triggers extraction. |
+| **`packages/tsconfig`** (base TS config) | A second package needs to extend the same `tsconfig.json`. | One consumer = the file IS the shared config. Extraction adds indirection for nothing. |
+| **`packages/eslint-config`** (shared lint rules) | A second package needs the same rule set. | Same logic. Next 16's default `eslint.config.mjs` lives in `apps/web/`. |
+| **Turborepo + remote caching** | Cold `next build` exceeds ~30s, OR a second app/package lands in the workspace graph. | Designed for multi-app graphs. For 1 app, plain `npm run` is fast and adds no config. Adopting Turbo prematurely means `turbo.json`, filter syntax, and a remote-cache provider for no measurable speedup. |
+| **Local Supabase containers in `npm run dev`** | Offline development becomes a real pain point, OR a parallel test database is needed for CI. | We use hosted Supabase with Clerk's third-party auth (JWKS hosted by Clerk). Local containers mean duplicating env, maintaining a parallel schema, and fighting Clerk JWKS locally. Net cost > benefit until the trigger fires. |
+| **Migration dry-run in CI** | We move off hosted Supabase or want preview-branch DBs per PR. | CI today validates code (typecheck + lint + build). Schema correctness is validated via Supabase MCP `apply_migration` against the hosted project. |
+
+**What we *did* adopt in v1 (Tier 1 — done or pending):** root npm workspaces with delegated scripts, zod-validated env at module load (`apps/web/lib/env.ts`), `db:types` script wrapping the typegen call, `apps/web/.env.example`, GitHub Actions running typecheck + lint + build on PR.
+
+**Rule of thumb:** if you find yourself proposing one of the deferred items, point at the trigger row first. If the trigger hasn't fired, don't adopt — write a one-paragraph note in the relevant phase doc explaining what would have triggered it, and move on.
+
 ## Project Context
 
 DanceStep is a Next.js app for Latin dancers. It recently pivoted from a single-purpose Cuban Casino move analyzer into a broader v1 platform:
