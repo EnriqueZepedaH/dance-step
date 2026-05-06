@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { VideoCard } from "./VideoCard";
 import type { PlaylistOption } from "./AddToPlaylistPopover";
@@ -24,6 +25,9 @@ type SearchResponse =
 type BookmarkInfo = { bookmarkId: string; playlistIds: Set<string> };
 
 export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
+  const router = useRouter();
+  const [, startTransition] = useTransition();
+
   const [query, setQuery] = useState("");
   const debounced = useDebouncedValue(query, 400);
   const [items, setItems] = useState<TrimmedItem[]>([]);
@@ -265,6 +269,11 @@ export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
       }
       return next;
     });
+
+    // Re-run the layout's server component so the sidebar picks up the
+    // new playlist row. Local state above already updates the popover
+    // and the card; this keeps the left rail in sync without a reload.
+    startTransition(() => router.refresh());
   }
 
   return (
