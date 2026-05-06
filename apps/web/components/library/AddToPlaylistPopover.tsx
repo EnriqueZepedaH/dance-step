@@ -109,23 +109,33 @@ export function AddToPlaylistPopover({
 
       {creating ? (
         <div className="atp-create">
-          <input
-            type="text"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            placeholder="New playlist name"
-            maxLength={MAX_NAME}
-            disabled={busy}
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleCreate();
-              if (e.key === "Escape") {
-                setCreating(false);
-                setNewName("");
-                setError(null);
-              }
-            }}
-          />
+          <div className="char-input">
+            <input
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="New playlist name"
+              maxLength={MAX_NAME}
+              disabled={busy}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreate();
+                if (e.key === "Escape") {
+                  setCreating(false);
+                  setNewName("");
+                  setError(null);
+                }
+              }}
+            />
+            {newName.length >= MAX_NAME - 8 ? (
+              <span
+                className={`char-counter${newName.length === MAX_NAME ? " at-max" : ""}`}
+                aria-live="polite"
+              >
+                {newName.length}/{MAX_NAME}
+              </span>
+            ) : null}
+          </div>
           <button
             type="button"
             className="btn btn-small"

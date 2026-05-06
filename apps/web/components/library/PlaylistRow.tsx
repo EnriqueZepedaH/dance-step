@@ -76,22 +76,32 @@ export function PlaylistRow({ id, name, description }: Props) {
     <li className="playlist-row">
       {editing ? (
         <div className="playlist-row-edit">
-          <input
-            type="text"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            maxLength={MAX_NAME}
-            disabled={busy}
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === "Enter") saveRename();
-              if (e.key === "Escape") {
-                setDraft(name);
-                setEditing(false);
-                setError(null);
-              }
-            }}
-          />
+          <div className="char-input">
+            <input
+              type="text"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              maxLength={MAX_NAME}
+              disabled={busy}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveRename();
+                if (e.key === "Escape") {
+                  setDraft(name);
+                  setEditing(false);
+                  setError(null);
+                }
+              }}
+            />
+            {draft.length >= MAX_NAME - 8 ? (
+              <span
+                className={`char-counter${draft.length === MAX_NAME ? " at-max" : ""}`}
+                aria-live="polite"
+              >
+                {draft.length}/{MAX_NAME}
+              </span>
+            ) : null}
+          </div>
           <button
             type="button"
             className="icon-btn"

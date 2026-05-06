@@ -1411,6 +1411,34 @@ h2, h3, h4 { margin: 0; }
   font-size: 12px;
 }
 
+/* Character counter shown next to length-capped name inputs */
+.char-input {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+.char-input > input {
+  flex: 1;
+  padding-right: 56px;
+  min-width: 0;
+}
+.char-counter {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font: 500 11px/1 var(--font-mono, monospace);
+  color: var(--ink-mute);
+  background: var(--cream);
+  padding: 2px 4px;
+  border-radius: 3px;
+  pointer-events: none;
+}
+.char-counter.at-max {
+  color: var(--terracotta-deep);
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
