@@ -5,6 +5,8 @@ import { ensureUser } from "@/lib/db/users";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Footer } from "@/components/Footer";
 
+export const dynamic = "force-dynamic";
+
 // Admin role gate. Lives outside the (app) route group so admin
 // pages don't share the public app shell — they get their own
 // header with admin nav and an explicit role check at the layout

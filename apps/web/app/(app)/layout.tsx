@@ -4,6 +4,8 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { Footer } from "@/components/Footer";
 import { ensureUser } from "@/lib/db/users";
 
+export const dynamic = "force-dynamic";
+
 // Wraps the post-landing pages (library, scene, future admin) with the
 // shared shell. Calls ensureUser() for any signed-in visitor so the
 // Supabase users row exists before feature pages start querying.
