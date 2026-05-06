@@ -214,10 +214,10 @@ export default function Home() {
               ))}
             </div>
 
-            <div className="room-foot">
+            <Link href="/library" className="room-foot">
               <span><Bookmark size={14} strokeWidth={1.6} style={{ verticalAlign: "-2px", marginRight: 8 }} />Bookmarks · Playlists</span>
               <span className="arrow"><ArrowUpRight size={16} strokeWidth={1.4} /></span>
-            </div>
+            </Link>
           </article>
 
           {/* Scene */}
@@ -237,10 +237,10 @@ export default function Home() {
               <span className="pin p4" data-label="Pilsen" />
             </div>
 
-            <div className="room-foot">
-              <span><MapPin size={14} strokeWidth={1.6} style={{ verticalAlign: "-2px", marginRight: 8 }} />4 events tonight</span>
+            <Link href="/scene" className="room-foot">
+              <span><MapPin size={14} strokeWidth={1.6} style={{ verticalAlign: "-2px", marginRight: 8 }} />Open the Chicago map</span>
               <span className="arrow"><ArrowUpRight size={16} strokeWidth={1.4} /></span>
-            </div>
+            </Link>
           </article>
 
           {/* Lab — full width */}
@@ -256,10 +256,10 @@ export default function Home() {
                 lay them on a timeline you can replay at quarter speed.
                 Accuracy is honest about uncertainty: clean, review, beta.
               </p>
-              <div className="room-foot">
-                <span><Sparkles size={14} strokeWidth={1.6} style={{ verticalAlign: "-2px", marginRight: 8 }} />Move-by-move breakdown</span>
+              <Link href="/upload" className="room-foot">
+                <span><Sparkles size={14} strokeWidth={1.6} style={{ verticalAlign: "-2px", marginRight: 8 }} />Join the waitlist</span>
                 <span className="arrow"><ArrowUpRight size={16} strokeWidth={1.4} /></span>
-              </div>
+              </Link>
             </div>
 
             <div className="lab-preview">
