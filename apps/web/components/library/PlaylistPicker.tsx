@@ -134,6 +134,7 @@ export function PlaylistPicker({
               placeholder="Playlist name"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
+              maxLength={40}
               autoFocus
             />
           )}

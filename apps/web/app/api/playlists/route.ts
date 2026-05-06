@@ -6,6 +6,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 // route file (id passed in body for mutate/delete). RLS-bound client
 // enforces ownership; non-owner mutations silently match zero rows.
 
+const MAX_NAME_LENGTH = 40;
+
 type CreateBody = { name?: string; description?: string | null };
 type PatchBody = { id?: string; name?: string; description?: string | null };
 
@@ -17,6 +19,12 @@ export async function POST(req: Request) {
   const name = body.name?.trim();
   if (!name) {
     return NextResponse.json({ error: "name required" }, { status: 400 });
+  }
+  if (name.length > MAX_NAME_LENGTH) {
+    return NextResponse.json(
+      { error: `name must be ${MAX_NAME_LENGTH} characters or fewer` },
+      { status: 400 },
+    );
   }
 
   const supabase = await createSupabaseServerClient();
@@ -44,7 +52,19 @@ export async function PATCH(req: Request) {
   }
 
   const update: { name?: string; description?: string | null } = {};
-  if (typeof body.name === "string") update.name = body.name.trim();
+  if (typeof body.name === "string") {
+    const trimmed = body.name.trim();
+    if (!trimmed) {
+      return NextResponse.json({ error: "name cannot be blank" }, { status: 400 });
+    }
+    if (trimmed.length > MAX_NAME_LENGTH) {
+      return NextResponse.json(
+        { error: `name must be ${MAX_NAME_LENGTH} characters or fewer` },
+        { status: 400 },
+      );
+    }
+    update.name = trimmed;
+  }
   if (body.description !== undefined) update.description = body.description;
 
   if (Object.keys(update).length === 0) {
