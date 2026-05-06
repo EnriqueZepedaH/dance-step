@@ -8,13 +8,21 @@ export type PlaylistSummary = {
   name: string;
   description: string | null;
   createdAt: string;
+  updatedAt: string;
   itemsCount: number;
 };
 
-type SortKey = "recent" | "name" | "size";
+type SortKey =
+  | "modified-desc"
+  | "modified-asc"
+  | "created-desc"
+  | "name"
+  | "size";
 
 const SORT_LABELS: Record<SortKey, string> = {
-  recent: "Most recent",
+  "modified-desc": "Recently modified",
+  "modified-asc": "Oldest modified",
+  "created-desc": "Newest",
   name: "Name (A→Z)",
   size: "Most videos",
 };
@@ -23,7 +31,7 @@ type Props = { playlists: PlaylistSummary[] };
 
 export function PlaylistsFilter({ playlists }: Props) {
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<SortKey>("recent");
+  const [sort, setSort] = useState<SortKey>("modified-desc");
 
   const visible = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
@@ -39,9 +47,15 @@ export function PlaylistsFilter({ playlists }: Props) {
       case "size":
         ordered.sort((a, b) => b.itemsCount - a.itemsCount);
         break;
-      case "recent":
-      default:
+      case "created-desc":
         ordered.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        break;
+      case "modified-asc":
+        ordered.sort((a, b) => a.updatedAt.localeCompare(b.updatedAt));
+        break;
+      case "modified-desc":
+      default:
+        ordered.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
         break;
     }
     return ordered;

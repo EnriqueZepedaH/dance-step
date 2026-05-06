@@ -21,8 +21,10 @@ export default async function MyLibraryPage() {
       .order("created_at", { ascending: false }),
     supabase
       .from("playlists")
-      .select("id, name, description, created_at, playlist_items(count)")
-      .order("created_at", { ascending: false }),
+      .select(
+        "id, name, description, created_at, updated_at, playlist_items(count)",
+      )
+      .order("updated_at", { ascending: false }),
   ]);
 
   const bookmarks = bookmarksRes.data ?? [];
@@ -31,6 +33,7 @@ export default async function MyLibraryPage() {
     name: p.name,
     description: p.description,
     createdAt: p.created_at,
+    updatedAt: p.updated_at,
     itemsCount: p.playlist_items?.[0]?.count ?? 0,
   }));
 
