@@ -1,7 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { PlaylistRow } from "@/components/library/PlaylistRow";
+import {
+  PlaylistsFilter,
+  type PlaylistSummary,
+} from "@/components/library/PlaylistsFilter";
 
 // Read-only "your library" view: every bookmark and playlist for the
 // signed-in user. Mutation (rename/delete) is deferred to v1.1; for
@@ -18,12 +21,18 @@ export default async function MyLibraryPage() {
       .order("created_at", { ascending: false }),
     supabase
       .from("playlists")
-      .select("id, name, description")
+      .select("id, name, description, created_at, playlist_items(count)")
       .order("created_at", { ascending: false }),
   ]);
 
   const bookmarks = bookmarksRes.data ?? [];
-  const playlists = playlistsRes.data ?? [];
+  const playlists: PlaylistSummary[] = (playlistsRes.data ?? []).map((p) => ({
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    createdAt: p.created_at,
+    itemsCount: p.playlist_items?.[0]?.count ?? 0,
+  }));
 
   return (
     <section className="page-shell">
@@ -35,24 +44,11 @@ export default async function MyLibraryPage() {
         </Link>
       </p>
 
-      <h2 className="section-h2">Playlists</h2>
-      {playlists.length === 0 ? (
-        <p className="search-status">
-          No playlists yet. Save a video and pick &ldquo;New playlist&rdquo;
-          to start one.
-        </p>
-      ) : (
-        <ul className="playlist-list">
-          {playlists.map((p) => (
-            <PlaylistRow
-              key={p.id}
-              id={p.id}
-              name={p.name}
-              description={p.description}
-            />
-          ))}
-        </ul>
-      )}
+      <h2 className="section-h2">
+        Playlists{playlists.length > 0 ? ` (${playlists.length})` : ""}
+      </h2>
+      <PlaylistsFilter playlists={playlists} />
+
 
       <h2 className="section-h2">Saved videos</h2>
       {bookmarks.length === 0 ? (
