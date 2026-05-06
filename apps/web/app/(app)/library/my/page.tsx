@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { PlaylistRow } from "@/components/library/PlaylistRow";
 
 // Read-only "your library" view: every bookmark and playlist for the
 // signed-in user. Mutation (rename/delete) is deferred to v1.1; for
@@ -43,14 +44,12 @@ export default async function MyLibraryPage() {
       ) : (
         <ul className="playlist-list">
           {playlists.map((p) => (
-            <li key={p.id}>
-              <Link href={`/library/playlists/${p.id}`} className="playlist-link">
-                <strong>{p.name}</strong>
-                {p.description ? (
-                  <span className="playlist-desc">{p.description}</span>
-                ) : null}
-              </Link>
-            </li>
+            <PlaylistRow
+              key={p.id}
+              id={p.id}
+              name={p.name}
+              description={p.description}
+            />
           ))}
         </ul>
       )}
