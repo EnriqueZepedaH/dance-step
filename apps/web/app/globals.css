@@ -1570,3 +1570,153 @@ h2, h3, h4 { margin: 0; }
   margin-top: 16px;
   flex-wrap: wrap;
 }
+
+/* ============================================================
+   Admin
+   ============================================================ */
+
+.admin-actions {
+  margin: 16px 0 24px;
+  display: flex;
+  gap: 12px;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--cream);
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: 400 14px/1.4 inherit;
+  color: var(--ink);
+}
+.admin-table th {
+  text-align: left;
+  font: 500 11px/1 inherit;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bone);
+}
+.admin-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: top;
+}
+.admin-table tr:last-child td {
+  border-bottom: none;
+}
+.row-meta {
+  font: italic 400 12px/1.3 inherit;
+  color: var(--ink-mute);
+}
+.row-actions {
+  white-space: nowrap;
+  font: 500 13px/1.3 inherit;
+}
+.row-actions a {
+  color: var(--terracotta);
+  text-decoration: none;
+}
+.row-actions a:hover {
+  text-decoration: underline;
+}
+.row-error {
+  color: var(--terracotta-deep);
+  font: italic 400 12px/1.3 inherit;
+}
+.btn-link-danger {
+  background: none;
+  border: none;
+  padding: 0;
+  font: 500 13px/1.3 inherit;
+  color: var(--terracotta);
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn-link-danger:hover {
+  text-decoration: underline;
+  color: var(--terracotta-deep);
+}
+.btn-link-danger:disabled {
+  color: var(--ink-mute);
+  cursor: not-allowed;
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 24px;
+  max-width: 640px;
+}
+.admin-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font: 500 12px/1 inherit;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.admin-form input,
+.admin-form textarea,
+.admin-form select {
+  padding: 12px 14px;
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: 400 15px/1.3 inherit;
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.admin-form input:focus,
+.admin-form textarea:focus,
+.admin-form select:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(210, 74, 28, 0.18);
+}
+.admin-form textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+.admin-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.admin-form fieldset {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 14px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.admin-form legend {
+  font: 500 12px/1 inherit;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  padding: 0 6px;
+}
+.admin-form-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.form-error {
+  margin: 0;
+  padding: 8px 12px;
+  background: rgba(210, 74, 28, 0.08);
+  border-left: 3px solid var(--terracotta);
+  font: 400 13px/1.4 inherit;
+  color: var(--terracotta-deep);
+}
