@@ -86,9 +86,20 @@ Secondary risks:
 - **Video quality** — party footage often has poor lighting and obstructions; the pipeline needs to degrade gracefully.
 
 ## Week 5 Goal
-A working end-to-end deployment with the two lower-risk features in usable shape and the experimental pipeline demoable on a few test videos:
+A deployed v1 platform whose value does **not** depend on the experimental analyzer working. The Library and Scene must be production-quality; the Lab is published as a research preview with a waitlist instead of an end-to-end demo:
 
-- **Auth & accounts** working via Clerk; Supabase schema deployed.
-- **Video library:** YouTube search functional in the app; users can bookmark videos and add them to at least one playlist.
-- **Scene explorer:** Map view rendering with ~5-10 manually seeded Chicago events; event detail pages working.
-- **Experimental analyzer:** Video upload, pose estimation, basic segmentation, and Claude Vision classification running end-to-end on 2-3 test Casino videos, with a timeline UI showing detected moves. Classification doesn't need to be perfect — the goal is to prove the pipeline works end-to-end and identify where accuracy breaks down so weeks 6-9 can focus on refinement (or graceful fallback).
+- **Auth & accounts** working via Clerk; Supabase schema deployed with RLS enforced; user sync via webhook + `ensureUser()` fallback.
+- **Library (live):** YouTube search proxied with 24-hour caching and quota-aware fallbacks; users can bookmark videos and organize them into named playlists; per-playlist view embeds clips via youtube-nocookie.
+- **Scene (live):** Mapbox-backed Chicago map; ~12 seed events expanded across 8 weeks via SQL (~96 rows); admin-only `/admin/events` UI for creating/editing events with server-side Mapbox geocoding for new venues; public event detail pages with Chicago-localized times.
+- **Lab (research preview, deferred to v2):** `/upload` rewritten as a research-preview page that explains the planned pipeline (pose extraction → move classification → timeline editor) and captures emails into a `lab_waitlist` table.
+
+### Why the analyzer pipeline is rescheduled to v2
+
+Earlier weeks of this project pivoted from "Casino move analyzer" to "multi-feature dancer hub." That pivot was driven by the same risk this proposal originally called out as the biggest one — **move classification accuracy is unproven**. Building the v1 launch story around a feature whose accuracy we can't yet guarantee would mean shipping a product whose perceived value collapses if the analyzer underdelivers. The v1 split keeps the Library + Scene as the load-bearing value (every dancer gets useful tools whether the analyzer is 90% accurate or 50%) and lets us iterate on the pipeline behind a waitlist gate.
+
+Concretely, v2 work resumes from Week 6:
+
+- **Pose extraction** with MediaPipe on a curated set of 20–30 Casino test clips with known move sequences.
+- **Move classification** via Claude Vision against a small hand-labeled vocabulary; honest accuracy reporting (clean / review / beta confidence buckets).
+- **Timeline UI** that exposes the labels for verification rather than presenting them as ground truth — the user can correct labels, building a labeled dataset over time.
+- The FastAPI service ships only when the above demonstrate ≥70% top-1 accuracy on the test set; otherwise the waitlist stays open and we keep iterating on labeling strategy.
