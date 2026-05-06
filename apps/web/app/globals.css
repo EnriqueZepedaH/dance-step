@@ -1201,6 +1201,9 @@ h2, h3, h4 { margin: 0; }
   gap: 24px;
 }
 
+.video-card-wrap {
+  position: relative;
+}
 .video-card {
   display: flex;
   flex-direction: column;
@@ -1246,25 +1249,167 @@ h2, h3, h4 { margin: 0; }
   color: var(--ink-mute);
 }
 
+.card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  align-items: center;
+}
+.icon-btn.is-active {
+  background: var(--ink);
+  color: var(--cream);
+  border-color: var(--ink);
+}
+.icon-btn.is-active:hover {
+  background: var(--terracotta);
+  border-color: var(--terracotta);
+  color: var(--cream);
+}
+
+/* /library/my still uses the legacy "Watch on YouTube" anchor button */
 .btn-save {
   margin-top: 6px;
   padding: 10px 14px;
-  background: var(--ink);
-  color: var(--cream);
+  background: var(--cream);
+  color: var(--ink);
   border: 1px solid var(--ink);
   border-radius: 4px;
   font: 500 13px/1 inherit;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   cursor: pointer;
+  text-decoration: none;
+  text-align: center;
   transition: background 120ms ease, color 120ms ease;
 }
-.btn-save:hover { background: var(--terracotta); border-color: var(--terracotta); }
-.btn-save.is-saved {
+.btn-save:hover { background: var(--bone); }
+.btn-save.is-saved { background: var(--cream); color: var(--ink); }
+.btn-save.is-saved:hover { background: var(--bone); }
+
+/* Add-to-playlist popover */
+.atp-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: min(280px, 90vw);
   background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: var(--shadow-2);
+  padding: 12px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.atp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.atp-title {
+  font: 500 11px/1 inherit;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.atp-empty {
+  margin: 0;
+  font: italic 400 13px/1.4 inherit;
+  color: var(--ink-mute);
+}
+.atp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.atp-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font: 400 14px/1.3 inherit;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.atp-row:hover { background: var(--bone); }
+.atp-row:disabled { opacity: 0.5; cursor: progress; }
+.atp-check {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--ink-mute);
+  border-radius: 3px;
+  background: white;
+  color: var(--cream);
+  flex-shrink: 0;
+}
+.atp-row.is-in .atp-check {
+  background: var(--terracotta);
+  border-color: var(--terracotta);
+}
+.atp-name {
+  flex: 1;
+  word-break: break-word;
+}
+.atp-create-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px;
+  background: transparent;
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+  font: 500 13px/1 inherit;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.atp-create-trigger:hover {
+  background: var(--bone);
+  border-color: var(--ink);
+}
+.atp-create {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+.atp-create input {
+  flex: 1;
+  padding: 8px 10px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: 400 14px/1.3 inherit;
   color: var(--ink);
 }
-.btn-save.is-saved:hover { background: var(--bone); }
+.atp-create input:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(210, 74, 28, 0.18);
+}
+.atp-error {
+  margin: 0;
+  font: italic 400 12px/1.3 inherit;
+  color: var(--terracotta-deep);
+}
+.btn-small {
+  padding: 8px 12px;
+  font-size: 12px;
+}
 
 .modal-backdrop {
   position: fixed;
