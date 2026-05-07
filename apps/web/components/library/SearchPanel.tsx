@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { VideoCard } from "./VideoCard";
+import { VideoZoomModal } from "./VideoZoomModal";
 import type { PlaylistOption } from "./AddToPlaylistPopover";
 import type { TrimmedItem } from "@/app/api/youtube/search/route";
+
+const HOVER_DELAY_MS = 400;
 
 export type InitialBookmark = {
   bookmarkId: string;
@@ -49,6 +52,23 @@ export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
   const [busyPlaylistEdge, setBusyPlaylistEdge] = useState<Set<string>>(
     new Set(),
   );
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const hoverTimer = useRef<number | null>(null);
+  const [zoomedId, setZoomedId] = useState<string | null>(null);
+
+  function handleHoverStart(videoId: string) {
+    if (hoverTimer.current) window.clearTimeout(hoverTimer.current);
+    hoverTimer.current = window.setTimeout(() => {
+      setHoveredId(videoId);
+    }, HOVER_DELAY_MS);
+  }
+  function handleHoverEnd() {
+    if (hoverTimer.current) {
+      window.clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+    setHoveredId(null);
+  }
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -301,6 +321,36 @@ export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
         debounced.trim().length >= 2 &&
         items.length === 0 && <p className="search-status">No results.</p>}
 
+      {zoomedId
+        ? (() => {
+            const v = items.find((x) => x.videoId === zoomedId);
+            if (!v) return null;
+            const info = bookmarks.get(v.videoId);
+            const cardBusyEdges = new Set<string>();
+            if (info) {
+              for (const e of busyPlaylistEdge) {
+                if (e.startsWith(`${v.videoId}::`)) {
+                  cardBusyEdges.add(e.split("::")[1]);
+                }
+              }
+            }
+            return (
+              <VideoZoomModal
+                video={v}
+                saved={Boolean(info)}
+                saving={savingIds.has(v.videoId)}
+                membership={info?.playlistIds ?? new Set()}
+                busyPlaylistIds={cardBusyEdges}
+                playlists={playlists}
+                onClose={() => setZoomedId(null)}
+                onToggleSave={() => handleToggleSave(v)}
+                onTogglePlaylist={(pid) => handleTogglePlaylist(v, pid)}
+                onCreatePlaylist={(name) => handleCreatePlaylistFor(v, name)}
+              />
+            );
+          })()
+        : null}
+
       <div className="results-grid">
         {items.map((v) => {
           const info = bookmarks.get(v.videoId);
@@ -321,6 +371,13 @@ export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
               membership={info?.playlistIds ?? new Set()}
               busyPlaylistIds={cardBusyEdges}
               playlists={playlists}
+              isHovered={hoveredId === v.videoId}
+              onHoverStart={() => handleHoverStart(v.videoId)}
+              onHoverEnd={handleHoverEnd}
+              onZoom={() => {
+                handleHoverEnd();
+                setZoomedId(v.videoId);
+              }}
               onToggleSave={() => handleToggleSave(v)}
               onTogglePlaylist={(pid) => handleTogglePlaylist(v, pid)}
               onCreatePlaylist={(name) => handleCreatePlaylistFor(v, name)}

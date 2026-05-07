@@ -16,6 +16,10 @@ type Props = {
   membership: Set<string>;
   busyPlaylistIds: Set<string>;
   playlists: PlaylistOption[];
+  isHovered: boolean;
+  onHoverStart: () => void;
+  onHoverEnd: () => void;
+  onZoom: () => void;
   onToggleSave: () => void;
   onTogglePlaylist: (playlistId: string) => void;
   onCreatePlaylist: (name: string) => Promise<void> | void;
@@ -28,6 +32,10 @@ export function VideoCard({
   membership,
   busyPlaylistIds,
   playlists,
+  isHovered,
+  onHoverStart,
+  onHoverEnd,
+  onZoom,
   onToggleSave,
   onTogglePlaylist,
   onCreatePlaylist,
@@ -37,18 +45,43 @@ export function VideoCard({
   return (
     <div className="video-card-wrap">
       <article className="video-card">
-        {video.thumbnail ? (
-          <div className="video-thumb">
+        <div
+          className="video-thumb"
+          onMouseEnter={onHoverStart}
+          onMouseLeave={onHoverEnd}
+          onFocus={onHoverStart}
+          onBlur={onHoverEnd}
+          onClick={onZoom}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onZoom();
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label={`Open ${video.title}`}
+        >
+          {isHovered ? (
+            <iframe
+              key={video.videoId}
+              src={`https://www.youtube-nocookie.com/embed/${video.videoId}?autoplay=1&mute=1&controls=0&rel=0&playsinline=1&modestbranding=1`}
+              title={video.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              tabIndex={-1}
+            />
+          ) : video.thumbnail ? (
             <Image
               src={video.thumbnail}
               alt=""
               fill
               sizes="(max-width: 720px) 100vw, 33vw"
             />
-          </div>
-        ) : (
-          <div className="video-thumb video-thumb-empty" />
-        )}
+          ) : (
+            <div className="video-thumb-empty-inner" />
+          )}
+        </div>
         <div className="video-meta">
           <h3 className="video-title">{video.title}</h3>
           <p className="video-channel">{video.channelTitle}</p>

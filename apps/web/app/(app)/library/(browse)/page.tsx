@@ -40,7 +40,7 @@ export default async function LibraryPage() {
       <p className="lede">
         Find a clip, save it, and drop it into a playlist when you want
         to drill it later.{" "}
-        <Link href="/library/my" className="lede-link">
+        <Link href="/library/my/videos" className="lede-link">
           Open your saved library →
         </Link>
       </p>

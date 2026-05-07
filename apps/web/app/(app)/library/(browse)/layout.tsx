@@ -1,17 +1,15 @@
 import type { ReactNode } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import {
-  LibrarySidebar,
-  type SidebarPlaylist,
-} from "@/components/library/LibrarySidebar";
+import { LibraryShell } from "@/components/library/LibraryShell";
+import { type SidebarPlaylist } from "@/components/library/LibrarySidebar";
 
-// Wraps every /library route with a left rail listing the user's
-// playlists and quick links to Search + Saved videos. RLS scopes the
-// fetch to the signed-in user; an admin viewing a non-admin's library
-// would still only see their own playlists, which is correct.
+// Wraps every browse-mode /library route with a left rail listing
+// the user's playlists and quick links to Search + Saved videos.
+// router.refresh() from rename/delete/create flows re-runs this
+// server component, so the sidebar stays in sync with mutations.
 //
-// router.refresh() from rename/delete/create flows re-runs this server
-// component, so the sidebar stays in sync with mutations on the page.
+// The grid + collapsed-state machinery lives in <LibraryShell>, a
+// thin client wrapper. This server layout just feeds it data.
 
 export default async function LibraryLayout({
   children,
@@ -29,10 +27,5 @@ export default async function LibraryLayout({
     name: p.name,
   }));
 
-  return (
-    <div className="library-shell">
-      <LibrarySidebar playlists={playlists} />
-      <div className="library-main">{children}</div>
-    </div>
-  );
+  return <LibraryShell playlists={playlists}>{children}</LibraryShell>;
 }

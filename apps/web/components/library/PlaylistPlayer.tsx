@@ -278,7 +278,7 @@ export function PlaylistPlayer({ playlistName, videos }: Props) {
       <div className="player-root">
         <header className="player-header">
           <Link
-            href="/library/my"
+            href="/library/my/videos"
             className="player-back"
             aria-label="Back to your library"
           >
@@ -304,7 +304,7 @@ export function PlaylistPlayer({ playlistName, videos }: Props) {
     <div className="player-root">
       <header className="player-header">
         <Link
-          href="/library/my"
+          href="/library/my/videos"
           className="player-back"
           aria-label="Back to your library"
         >
