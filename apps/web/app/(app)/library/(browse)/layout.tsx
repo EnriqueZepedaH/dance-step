@@ -21,13 +21,12 @@ export default async function LibraryLayout({
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase
     .from("playlists")
-    .select("id, name, playlist_items(count)")
+    .select("id, name")
     .order("created_at", { ascending: false });
 
   const playlists: SidebarPlaylist[] = (data ?? []).map((p) => ({
     id: p.id,
     name: p.name,
-    itemsCount: p.playlist_items?.[0]?.count ?? 0,
   }));
 
   return (

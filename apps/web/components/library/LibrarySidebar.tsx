@@ -8,7 +8,6 @@ import { Search, Bookmark, Sparkles } from "lucide-react";
 export type SidebarPlaylist = {
   id: string;
   name: string;
-  itemsCount: number;
 };
 
 type Props = { playlists: SidebarPlaylist[] };
@@ -86,9 +85,6 @@ export function LibrarySidebar({ playlists }: Props) {
                     className={`sidebar-link${isActive(href) ? " is-active" : ""}`}
                   >
                     <span className="sidebar-playlist-name">{p.name}</span>
-                    <span className="sidebar-playlist-count">
-                      {p.itemsCount}
-                    </span>
                   </Link>
                 </li>
               );
