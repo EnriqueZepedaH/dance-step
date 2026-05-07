@@ -39,20 +39,37 @@ type YTMessage = {
   info?: number | { muted?: boolean; [k: string]: unknown };
 };
 
+// YouTube's official widgetapi.js always includes both `id` and
+// `channel: "widget"` on outgoing messages, and the iframe will
+// silently drop messages that don't match the channel — that's the
+// most common reason a hand-rolled handshake "doesn't work."
+const YT_CHANNEL = "widget";
+const YT_PLAYER_ID = "dancestep-player";
+
 function sendYTCommand(
   iframe: HTMLIFrameElement,
   func: string,
   args: unknown[] = [],
 ) {
   iframe.contentWindow?.postMessage(
-    JSON.stringify({ event: "command", func, args }),
+    JSON.stringify({
+      event: "command",
+      func,
+      args,
+      id: YT_PLAYER_ID,
+      channel: YT_CHANNEL,
+    }),
     "*",
   );
 }
 
 function sendYTListening(iframe: HTMLIFrameElement) {
   iframe.contentWindow?.postMessage(
-    JSON.stringify({ event: "listening", id: "dancestep-player" }),
+    JSON.stringify({
+      event: "listening",
+      id: YT_PLAYER_ID,
+      channel: YT_CHANNEL,
+    }),
     "*",
   );
 }
@@ -126,27 +143,24 @@ export function PlaylistPlayer({ playlistName, videos }: Props) {
 
   // Callback ref attached only to the active iframe. Resets the live
   // mute tracking and sends a "listening" handshake so the iframe
-  // starts broadcasting JSON events to window.postMessage. Multiple
-  // sends because the iframe's internal API isn't always ready by the
-  // load event; YouTube simply ignores duplicate handshakes.
+  // starts broadcasting JSON events back via window.postMessage.
+  // The iframe's internal API isn't always ready by the load event,
+  // so we ping at several intervals; YouTube ignores duplicates.
   const onActiveIframe = useCallback((iframe: HTMLIFrameElement | null) => {
     activeIframeRef.current = iframe;
     mutedRef.current = true;
     if (!iframe) return;
-    const ping = () => sendYTListening(iframe);
+    const ping = () => {
+      // The iframe may have already been swapped by React; if so,
+      // contentWindow is gone and the optional chain in sendYTListening
+      // makes this a safe no-op.
+      if (activeIframeRef.current === iframe) sendYTListening(iframe);
+    };
     iframe.addEventListener("load", ping, { once: true });
-    const t1 = window.setTimeout(ping, 200);
-    const t2 = window.setTimeout(ping, 800);
-    // Best-effort cleanup of the timeouts if React swaps the ref
-    // before they fire. The iframe's load listener is once-only.
-    iframe.addEventListener(
-      "DOMNodeRemovedFromDocument",
-      () => {
-        window.clearTimeout(t1);
-        window.clearTimeout(t2);
-      },
-      { once: true },
-    );
+    window.setTimeout(ping, 100);
+    window.setTimeout(ping, 400);
+    window.setTimeout(ping, 1200);
+    window.setTimeout(ping, 3000);
   }, []);
 
   // Single window listener for the YouTube iframe message bus. Filters
