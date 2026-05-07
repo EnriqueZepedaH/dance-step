@@ -39,10 +39,25 @@ export async function POST(req: Request) {
     .single();
 
   if (error) {
+    if (isUniqueViolation(error)) {
+      return NextResponse.json(
+        { error: "You already have a playlist with that name." },
+        { status: 409 },
+      );
+    }
     console.error("playlist create failed", error);
     return NextResponse.json({ error: "create failed" }, { status: 500 });
   }
   return NextResponse.json({ playlist: data });
+}
+
+// Postgres returns SQLSTATE 23505 for unique-constraint violations.
+// supabase-js surfaces the code on the error object; the migration
+// at 0003_playlists_unique_name_per_user.sql adds a unique index on
+// (user_id, lower(name)) so two playlists with the same name on the
+// same account get rejected here.
+function isUniqueViolation(error: { code?: string }): boolean {
+  return error.code === "23505";
 }
 
 export async function PATCH(req: Request) {
@@ -80,6 +95,12 @@ export async function PATCH(req: Request) {
     .maybeSingle();
 
   if (error) {
+    if (isUniqueViolation(error)) {
+      return NextResponse.json(
+        { error: "You already have a playlist with that name." },
+        { status: 409 },
+      );
+    }
     console.error("playlist update failed", error);
     return NextResponse.json({ error: "update failed" }, { status: 500 });
   }
