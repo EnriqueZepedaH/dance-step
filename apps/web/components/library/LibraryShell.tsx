@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import {
-  LibrarySidebar,
-  type SidebarPlaylist,
-} from "@/components/library/LibrarySidebar";
+import { LibrarySidebar } from "@/components/library/LibrarySidebar";
 
 // Client wrapper around the (browse) layout. Owns the collapse state
 // for the playlist sidebar so the toggle button can flip it from the
@@ -16,11 +13,10 @@ import {
 const STORAGE_KEY = "library-sidebar-collapsed";
 
 type Props = {
-  playlists: SidebarPlaylist[];
   children: ReactNode;
 };
 
-export function LibraryShell({ playlists, children }: Props) {
+export function LibraryShell({ children }: Props) {
   const [collapsed, setCollapsed] = useState(false);
 
   // Standard SSR-safe hydration pattern: render the default on the
@@ -53,11 +49,7 @@ export function LibraryShell({ playlists, children }: Props) {
 
   return (
     <div className={`library-shell${collapsed ? " is-collapsed" : ""}`}>
-      <LibrarySidebar
-        playlists={playlists}
-        collapsed={collapsed}
-        onToggle={toggle}
-      />
+      <LibrarySidebar collapsed={collapsed} onToggle={toggle} />
       <div className="library-main">{children}</div>
     </div>
   );
