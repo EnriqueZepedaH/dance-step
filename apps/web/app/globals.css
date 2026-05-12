@@ -1200,6 +1200,15 @@ h2, h3, h4 { margin: 0; }
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
 }
+.results-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+.results-more .btn[disabled] {
+  opacity: 0.55;
+  cursor: progress;
+}
 
 .video-card-wrap {
   position: relative;
@@ -2001,6 +2010,33 @@ h2, h3, h4 { margin: 0; }
 @media (max-width: 880px) {
   .sidebar-rail { display: none !important; }
   .library-sidebar.is-collapsed .sidebar-content { display: flex; }
+
+  /* Instagram-style icon strip on narrow screens. The collapse
+     toggle and the eyebrow header don't make sense once the
+     sidebar moves on top of the content, and the wordy labels
+     would push the row too wide for thumb reach. Selectors here
+     are scoped under .library-sidebar to outrank the plain
+     .library-sidebar-section rule that lives later in the file. */
+  .library-sidebar .sidebar-toggle { display: none; }
+  .library-sidebar .library-sidebar-section .sidebar-eyebrow { display: none; }
+  .library-sidebar .library-sidebar-section {
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    gap: 8px;
+  }
+  .library-sidebar .library-sidebar-section .sidebar-link {
+    flex: 1;
+    justify-content: center;
+    padding: 10px;
+  }
+  .library-sidebar .library-sidebar-section .sidebar-link-label {
+    display: none;
+  }
+  .library-sidebar .library-sidebar-section .sidebar-link svg {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 .library-sidebar-section {
@@ -2935,8 +2971,14 @@ h2, h3, h4 { margin: 0; }
   overflow-y: auto;
   flex: 1;
 }
+.queue-row-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 .queue-row {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   display: grid;
   grid-template-columns: 28px 96px 1fr;
   gap: 12px;
@@ -2949,6 +2991,35 @@ h2, h3, h4 { margin: 0; }
   cursor: pointer;
   color: var(--ink);
   transition: background 120ms ease, border-color 120ms ease;
+}
+.queue-remove {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--ink-mute);
+  cursor: pointer;
+  opacity: 0;
+  transition: background 120ms ease, border-color 120ms ease,
+    color 120ms ease, opacity 120ms ease;
+}
+.queue-row-wrap:hover .queue-remove,
+.queue-remove:focus-visible {
+  opacity: 1;
+}
+.queue-remove:hover {
+  background: var(--bone);
+  border-color: var(--line);
+  color: var(--terracotta);
+}
+.queue-remove:disabled {
+  opacity: 0.5;
+  cursor: progress;
 }
 .queue-row:hover {
   background: var(--paper);

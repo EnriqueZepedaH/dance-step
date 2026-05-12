@@ -52,5 +52,11 @@ export default async function PlaylistDetailPage({
     thumbnailUrl: it.thumbnail_url,
   }));
 
-  return <PlaylistPlayer playlistName={playlist.name} videos={videos} />;
+  return (
+    <PlaylistPlayer
+      playlistId={playlist.id}
+      playlistName={playlist.name}
+      videos={videos}
+    />
+  );
 }

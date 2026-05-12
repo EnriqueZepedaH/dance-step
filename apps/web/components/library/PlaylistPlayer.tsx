@@ -8,6 +8,7 @@ import {
   ChevronUp,
   ChevronDown,
   ListMusic,
+  Trash2,
   X,
 } from "lucide-react";
 
@@ -19,6 +20,7 @@ export type PlayerVideo = {
 };
 
 type Props = {
+  playlistId: string;
   playlistName: string;
   videos: PlayerVideo[];
 };
@@ -186,11 +188,51 @@ function ActivePanel({ video, soundOnRef, onEndedRef }: ActivePanelProps) {
 // require muted for autoplay; the user can unmute via the YouTube
 // player UI.
 
-export function PlaylistPlayer({ playlistName, videos }: Props) {
+export function PlaylistPlayer({
+  playlistId,
+  playlistName,
+  videos: initialVideos,
+}: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
   const panelRefs = useRef<Array<HTMLElement | null>>([]);
+  const [videos, setVideos] = useState<PlayerVideo[]>(initialVideos);
   const [active, setActive] = useState(0);
   const [queueOpen, setQueueOpen] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  // Remove a video from the playlist without leaving the page. The
+  // queue list updates immediately; the active index shifts to keep
+  // the user on the same logical video when possible (or steps back
+  // by one if the deleted row was earlier in the list). If the
+  // currently-playing video is removed, the next-in-line takes its
+  // slot — same UX as scrolling to the next one.
+  async function handleRemove(v: PlayerVideo) {
+    if (removingId) return;
+    setRemovingId(v.youtubeId);
+    try {
+      const res = await fetch(
+        `/api/playlists/${playlistId}/items?youtubeId=${encodeURIComponent(v.youtubeId)}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) throw new Error("Could not remove from playlist.");
+      const removedIdx = videos.findIndex((x) => x.youtubeId === v.youtubeId);
+      if (removedIdx === -1) return;
+      const nextVideos = videos.filter((x) => x.youtubeId !== v.youtubeId);
+      setVideos(nextVideos);
+      if (nextVideos.length === 0) {
+        setActive(0);
+      } else if (removedIdx < active) {
+        setActive(active - 1);
+      } else if (removedIdx === active) {
+        setActive(Math.min(active, nextVideos.length - 1));
+      }
+      panelRefs.current.splice(removedIdx, 1);
+    } catch {
+      /* swallow; the row stays in place */
+    } finally {
+      setRemovingId(null);
+    }
+  }
 
   // Sound preference carries across panels. Every iframe still starts
   // muted (browsers refuse autoplay-with-sound on a fresh iframe);
@@ -432,8 +474,9 @@ export function PlaylistPlayer({ playlistName, videos }: Props) {
           <ol className="queue-list">
             {videos.map((v, i) => {
               const isActive = i === active;
+              const pending = removingId === v.youtubeId;
               return (
-                <li key={v.youtubeId}>
+                <li key={v.youtubeId} className="queue-row-wrap">
                   <button
                     type="button"
                     className={`queue-row${isActive ? " is-active" : ""}`}
@@ -460,6 +503,16 @@ export function PlaylistPlayer({ playlistName, videos }: Props) {
                       <span className="queue-title">{v.title}</span>
                       <span className="queue-channel">{v.channel ?? ""}</span>
                     </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="queue-remove"
+                    onClick={() => handleRemove(v)}
+                    disabled={pending}
+                    aria-label={`Remove "${v.title}" from playlist`}
+                    title="Remove from playlist"
+                  >
+                    <Trash2 size={14} strokeWidth={1.7} />
                   </button>
                 </li>
               );

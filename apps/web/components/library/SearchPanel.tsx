@@ -33,8 +33,12 @@ export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
   const debounced = useDebouncedValue(query, 400);
   const [items, setItems] = useState<TrimmedItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rateLimited, setRateLimited] = useState(false);
+  const [nextPageToken, setNextPageToken] = useState<string | undefined>(
+    undefined,
+  );
 
   const [playlists, setPlaylists] = useState<PlaylistOption[]>(initialPlaylists);
   // Two independent stores after migration 0004: a saved set keyed
@@ -77,6 +81,7 @@ export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
     const trimmed = debounced.trim();
     if (trimmed.length < 2) {
       setItems([]);
+      setNextPageToken(undefined);
       setError(null);
       setRateLimited(false);
       return;
@@ -92,11 +97,13 @@ export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
         if (cancelled) return;
         if ("rateLimited" in data) {
           setItems([]);
+          setNextPageToken(undefined);
           setRateLimited(true);
           return;
         }
         setRateLimited(false);
         setItems(data.items);
+        setNextPageToken(data.nextPageToken);
       })
       .catch((e: unknown) => {
         if (!cancelled) {
@@ -112,6 +119,44 @@ export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
     };
   }, [debounced]);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Append the next page of YouTube results to the existing list.
+  // Guards against a stale query: if the user types something new
+  // mid-flight, the fresh page-1 effect above will overwrite items
+  // anyway, but we drop the appended page if the query has moved on.
+  async function handleLoadMore() {
+    if (!nextPageToken || loadingMore) return;
+    const trimmed = debounced.trim();
+    if (trimmed.length < 2) return;
+
+    setLoadingMore(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/youtube/search?q=${encodeURIComponent(trimmed)}&pageToken=${encodeURIComponent(nextPageToken)}`,
+      );
+      const data = (await res.json()) as SearchResponse;
+      if ("rateLimited" in data) {
+        setRateLimited(true);
+        return;
+      }
+      // Bail if the underlying query changed while we were fetching.
+      if (debounced.trim() !== trimmed) return;
+      // Dedupe defensively — YouTube paging is usually disjoint but
+      // a result that already exists in the grid would create a
+      // duplicate React key.
+      setItems((prev) => {
+        const seen = new Set(prev.map((p) => p.videoId));
+        const fresh = data.items.filter((it) => !seen.has(it.videoId));
+        return [...prev, ...fresh];
+      });
+      setNextPageToken(data.nextPageToken);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not load more.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   // Mark a transient saving spinner on a video; cleanup when the awaited
   // mutation resolves regardless of outcome.
@@ -358,6 +403,19 @@ export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
           );
         })}
       </div>
+
+      {nextPageToken && items.length > 0 && !rateLimited ? (
+        <div className="results-more">
+          <button
+            type="button"
+            className="btn"
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+          >
+            {loadingMore ? "Loading…" : "Load more"}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
