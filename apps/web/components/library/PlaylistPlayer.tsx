@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 
 export type PlayerVideo = {
-  id: string;
   youtubeId: string;
   title: string;
   channel: string | null;
@@ -323,7 +322,7 @@ export function PlaylistPlayer({ playlistName, videos }: Props) {
           const isActive = i === active;
           return (
             <section
-              key={v.id}
+              key={v.youtubeId}
               data-index={i}
               ref={(el) => {
                 panelRefs.current[i] = el;
@@ -434,7 +433,7 @@ export function PlaylistPlayer({ playlistName, videos }: Props) {
             {videos.map((v, i) => {
               const isActive = i === active;
               return (
-                <li key={v.id}>
+                <li key={v.youtubeId}>
                   <button
                     type="button"
                     className={`queue-row${isActive ? " is-active" : ""}`}

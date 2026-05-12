@@ -9,23 +9,31 @@ import type { PlaylistOption } from "@/components/library/AddToPlaylistPopover";
 // Saved videos. Card grid mirrors the search panel and the playlists
 // grid: hover-to-preview on the thumbnail, click opens the same zoom
 // modal with bookmark + add-to-playlist controls. RLS scopes both
-// fetches to the signed-in user.
+// fetches to the signed-in user. After migration 0004, playlist
+// memberships are joined client-side on youtube_id (playlist_items
+// no longer references bookmarks).
 
 export default async function SavedVideosPage() {
   const supabase = await createSupabaseServerClient();
 
-  const [bookmarksRes, playlistsRes] = await Promise.all([
+  const [bookmarksRes, playlistsRes, itemsRes] = await Promise.all([
     supabase
       .from("bookmarks")
-      .select(
-        "id, youtube_id, title, channel, thumbnail_url, playlist_items(playlist_id)",
-      )
+      .select("id, youtube_id, title, channel, thumbnail_url")
       .order("created_at", { ascending: false }),
     supabase
       .from("playlists")
       .select("id, name")
       .order("created_at", { ascending: false }),
+    supabase.from("playlist_items").select("playlist_id, youtube_id"),
   ]);
+
+  const membership = new Map<string, string[]>();
+  for (const row of itemsRes.data ?? []) {
+    const list = membership.get(row.youtube_id) ?? [];
+    list.push(row.playlist_id);
+    membership.set(row.youtube_id, list);
+  }
 
   const bookmarks: SavedVideo[] = (bookmarksRes.data ?? []).map((b) => ({
     bookmarkId: b.id,
@@ -33,7 +41,7 @@ export default async function SavedVideosPage() {
     title: b.title,
     channel: b.channel,
     thumbnailUrl: b.thumbnail_url,
-    playlistIds: (b.playlist_items ?? []).map((pi) => pi.playlist_id),
+    playlistIds: membership.get(b.youtube_id) ?? [],
   }));
 
   const playlists: PlaylistOption[] = (playlistsRes.data ?? []).map((p) => ({

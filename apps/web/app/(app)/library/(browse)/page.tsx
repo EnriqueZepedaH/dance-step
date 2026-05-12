@@ -7,29 +7,38 @@ import {
 
 // Server-renders initial state for the search panel: existing
 // playlists and the user's saved bookmarks with their playlist
-// memberships. Lets each video card paint with the correct saved
-// state and "in this playlist" checkmarks on first render. RLS
-// scopes everything to the signed-in user.
+// memberships. After migration 0004, playlist_items no longer
+// references bookmarks, so memberships are joined client-side on
+// youtube_id. RLS scopes playlist_items by parent playlist
+// ownership, so the fetch already only returns the user's own
+// playlist rows.
 
 export default async function LibraryPage() {
   const supabase = await createSupabaseServerClient();
 
-  const [playlistsRes, bookmarksRes] = await Promise.all([
+  const [playlistsRes, bookmarksRes, itemsRes] = await Promise.all([
     supabase
       .from("playlists")
       .select("id, name")
       .order("created_at", { ascending: false }),
-    supabase
-      .from("bookmarks")
-      .select("id, youtube_id, playlist_items(playlist_id)"),
+    supabase.from("bookmarks").select("id, youtube_id"),
+    supabase.from("playlist_items").select("playlist_id, youtube_id"),
   ]);
 
   const playlists = playlistsRes.data ?? [];
+
+  const membership = new Map<string, string[]>();
+  for (const row of itemsRes.data ?? []) {
+    const list = membership.get(row.youtube_id) ?? [];
+    list.push(row.playlist_id);
+    membership.set(row.youtube_id, list);
+  }
+
   const initialBookmarks: InitialBookmark[] = (bookmarksRes.data ?? []).map(
     (b) => ({
       bookmarkId: b.id,
       youtubeId: b.youtube_id,
-      playlistIds: (b.playlist_items ?? []).map((pi) => pi.playlist_id),
+      playlistIds: membership.get(b.youtube_id) ?? [],
     }),
   );
 

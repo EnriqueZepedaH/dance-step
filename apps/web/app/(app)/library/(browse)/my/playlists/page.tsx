@@ -6,11 +6,12 @@ import {
 } from "@/components/library/PlaylistCardGrid";
 
 // Playlists hub: YouTube-style grid where each card shows the first
-// video's thumbnail and previews the video on hover. The first-video
-// fetch is embedded; we sort items by position client-side and take
-// position 0 as the cover. For the playlist sizes we expect
-// (single-digit videos per playlist for most users), pulling all
-// items per playlist is fine.
+// video's thumbnail and previews the video on hover. After migration
+// 0004, playlist_items carries its own video snapshot, so the cover
+// fetch no longer joins bookmarks. We sort items by position
+// client-side and take position 0 as the cover. For the playlist
+// sizes we expect (single-digit videos per playlist for most users),
+// pulling all items per playlist is fine.
 
 type PlaylistRow = {
   id: string;
@@ -21,10 +22,8 @@ type PlaylistRow = {
   playlist_items:
     | {
         position: number;
-        bookmarks: {
-          youtube_id: string;
-          thumbnail_url: string | null;
-        } | null;
+        youtube_id: string;
+        thumbnail_url: string | null;
       }[]
     | null;
 };
@@ -36,7 +35,7 @@ export default async function MyPlaylistsPage() {
     .from("playlists")
     .select(
       `id, name, description, created_at, updated_at,
-       playlist_items(position, bookmarks(youtube_id, thumbnail_url))`,
+       playlist_items(position, youtube_id, thumbnail_url)`,
     )
     .order("updated_at", { ascending: false });
 
@@ -46,7 +45,7 @@ export default async function MyPlaylistsPage() {
     const items = [...(p.playlist_items ?? [])].sort(
       (a, b) => a.position - b.position,
     );
-    const first = items[0]?.bookmarks ?? null;
+    const first = items[0] ?? null;
     return {
       id: p.id,
       name: p.name,

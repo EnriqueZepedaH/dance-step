@@ -25,8 +25,6 @@ type SearchResponse =
   | { rateLimited: true }
   | { items: TrimmedItem[]; nextPageToken?: string; cached: boolean };
 
-type BookmarkInfo = { bookmarkId: string; playlistIds: Set<string> };
-
 export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -39,13 +37,17 @@ export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
   const [rateLimited, setRateLimited] = useState(false);
 
   const [playlists, setPlaylists] = useState<PlaylistOption[]>(initialPlaylists);
-  const [bookmarks, setBookmarks] = useState<Map<string, BookmarkInfo>>(
+  // Two independent stores after migration 0004: a saved set keyed
+  // by youtubeId (bookmark presence), and a per-video set of
+  // playlist ids it belongs to. Removing a bookmark no longer
+  // affects memberships and vice versa.
+  const [savedIds, setSavedIds] = useState<Set<string>>(
+    () => new Set(initialBookmarks.map((b) => b.youtubeId)),
+  );
+  const [memberships, setMemberships] = useState<Map<string, Set<string>>>(
     () =>
       new Map(
-        initialBookmarks.map((b) => [
-          b.youtubeId,
-          { bookmarkId: b.bookmarkId, playlistIds: new Set(b.playlistIds) },
-        ]),
+        initialBookmarks.map((b) => [b.youtubeId, new Set(b.playlistIds)]),
       ),
   );
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
@@ -151,40 +153,28 @@ export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
     });
   }
 
-  // Ensure the bookmark exists; returns the bookmarkId (existing or new).
-  // Updates local state with the new bookmark.
-  async function ensureBookmark(video: TrimmedItem): Promise<string> {
-    const existing = bookmarks.get(video.videoId);
-    if (existing) return existing.bookmarkId;
-
-    const res = await fetch("/api/bookmarks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        youtubeId: video.videoId,
-        title: video.title,
-        channel: video.channelTitle,
-        thumbnail: video.thumbnail,
-      }),
-    });
-    if (!res.ok) throw new Error("Could not save bookmark.");
-    const { bookmark } = (await res.json()) as { bookmark: { id: string } };
-
-    setBookmarks((prev) => {
+  function addMembership(youtubeId: string, playlistId: string) {
+    setMemberships((prev) => {
       const next = new Map(prev);
-      next.set(video.videoId, {
-        bookmarkId: bookmark.id,
-        playlistIds: new Set(),
-      });
+      const cur = new Set(next.get(youtubeId) ?? []);
+      cur.add(playlistId);
+      next.set(youtubeId, cur);
       return next;
     });
-    return bookmark.id;
+  }
+  function removeMembership(youtubeId: string, playlistId: string) {
+    setMemberships((prev) => {
+      const next = new Map(prev);
+      const cur = new Set(next.get(youtubeId) ?? []);
+      cur.delete(playlistId);
+      next.set(youtubeId, cur);
+      return next;
+    });
   }
 
   async function handleToggleSave(video: TrimmedItem) {
     await withSaving(video.videoId, async () => {
-      const existing = bookmarks.get(video.videoId);
-      if (existing) {
+      if (savedIds.has(video.videoId)) {
         const res = await fetch(
           `/api/bookmarks?youtubeId=${encodeURIComponent(video.videoId)}`,
           { method: "DELETE" },
@@ -193,62 +183,59 @@ export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
           setError("Could not remove bookmark.");
           return;
         }
-        setBookmarks((prev) => {
-          const next = new Map(prev);
+        setSavedIds((prev) => {
+          const next = new Set(prev);
           next.delete(video.videoId);
           return next;
         });
       } else {
-        try {
-          await ensureBookmark(video);
-        } catch (e) {
-          setError(e instanceof Error ? e.message : "Save failed.");
+        const res = await fetch("/api/bookmarks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            youtubeId: video.videoId,
+            title: video.title,
+            channel: video.channelTitle,
+            thumbnail: video.thumbnail,
+          }),
+        });
+        if (!res.ok) {
+          setError("Could not save bookmark.");
+          return;
         }
+        setSavedIds((prev) => {
+          const next = new Set(prev);
+          next.add(video.videoId);
+          return next;
+        });
       }
     });
   }
 
   async function handleTogglePlaylist(video: TrimmedItem, playlistId: string) {
     await withBusyEdge(video.videoId, playlistId, async () => {
+      const inPlaylist = memberships.get(video.videoId)?.has(playlistId);
       try {
-        const bookmarkId = await ensureBookmark(video);
-        const inPlaylist = bookmarks
-          .get(video.videoId)
-          ?.playlistIds.has(playlistId);
-
         if (inPlaylist) {
           const res = await fetch(
-            `/api/playlists/${playlistId}/items?bookmarkId=${encodeURIComponent(bookmarkId)}`,
+            `/api/playlists/${playlistId}/items?youtubeId=${encodeURIComponent(video.videoId)}`,
             { method: "DELETE" },
           );
           if (!res.ok) throw new Error("Could not remove from playlist.");
-          setBookmarks((prev) => {
-            const next = new Map(prev);
-            const cur = next.get(video.videoId);
-            if (cur) {
-              const ids = new Set(cur.playlistIds);
-              ids.delete(playlistId);
-              next.set(video.videoId, { ...cur, playlistIds: ids });
-            }
-            return next;
-          });
+          removeMembership(video.videoId, playlistId);
         } else {
           const res = await fetch(`/api/playlists/${playlistId}/items`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bookmarkId }),
+            body: JSON.stringify({
+              youtubeId: video.videoId,
+              title: video.title,
+              channel: video.channelTitle,
+              thumbnail: video.thumbnail,
+            }),
           });
           if (!res.ok) throw new Error("Could not add to playlist.");
-          setBookmarks((prev) => {
-            const next = new Map(prev);
-            const cur = next.get(video.videoId);
-            if (cur) {
-              const ids = new Set(cur.playlistIds);
-              ids.add(playlistId);
-              next.set(video.videoId, { ...cur, playlistIds: ids });
-            }
-            return next;
-          });
+          addMembership(video.videoId, playlistId);
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Playlist update failed.");
@@ -271,28 +258,20 @@ export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
     };
     setPlaylists((prev) => [{ id: playlist.id, name: playlist.name }, ...prev]);
 
-    const bookmarkId = await ensureBookmark(video);
     const itemRes = await fetch(`/api/playlists/${playlist.id}/items`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookmarkId }),
+      body: JSON.stringify({
+        youtubeId: video.videoId,
+        title: video.title,
+        channel: video.channelTitle,
+        thumbnail: video.thumbnail,
+      }),
     });
     if (!itemRes.ok) throw new Error("Saved playlist, but couldn't add video.");
 
-    setBookmarks((prev) => {
-      const next = new Map(prev);
-      const cur = next.get(video.videoId);
-      if (cur) {
-        const ids = new Set(cur.playlistIds);
-        ids.add(playlist.id);
-        next.set(video.videoId, { ...cur, playlistIds: ids });
-      }
-      return next;
-    });
+    addMembership(video.videoId, playlist.id);
 
-    // Re-run the layout's server component so the sidebar picks up the
-    // new playlist row. Local state above already updates the popover
-    // and the card; this keeps the left rail in sync without a reload.
     startTransition(() => router.refresh());
   }
 
@@ -325,21 +304,18 @@ export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
         ? (() => {
             const v = items.find((x) => x.videoId === zoomedId);
             if (!v) return null;
-            const info = bookmarks.get(v.videoId);
             const cardBusyEdges = new Set<string>();
-            if (info) {
-              for (const e of busyPlaylistEdge) {
-                if (e.startsWith(`${v.videoId}::`)) {
-                  cardBusyEdges.add(e.split("::")[1]);
-                }
+            for (const e of busyPlaylistEdge) {
+              if (e.startsWith(`${v.videoId}::`)) {
+                cardBusyEdges.add(e.split("::")[1]);
               }
             }
             return (
               <VideoZoomModal
                 video={v}
-                saved={Boolean(info)}
+                saved={savedIds.has(v.videoId)}
                 saving={savingIds.has(v.videoId)}
-                membership={info?.playlistIds ?? new Set()}
+                membership={memberships.get(v.videoId) ?? new Set()}
                 busyPlaylistIds={cardBusyEdges}
                 playlists={playlists}
                 onClose={() => setZoomedId(null)}
@@ -353,22 +329,19 @@ export function SearchPanel({ initialPlaylists, initialBookmarks }: Props) {
 
       <div className="results-grid">
         {items.map((v) => {
-          const info = bookmarks.get(v.videoId);
           const cardBusyEdges = new Set<string>();
-          if (info) {
-            for (const e of busyPlaylistEdge) {
-              if (e.startsWith(`${v.videoId}::`)) {
-                cardBusyEdges.add(e.split("::")[1]);
-              }
+          for (const e of busyPlaylistEdge) {
+            if (e.startsWith(`${v.videoId}::`)) {
+              cardBusyEdges.add(e.split("::")[1]);
             }
           }
           return (
             <VideoCard
               key={v.videoId}
               video={v}
-              saved={Boolean(info)}
+              saved={savedIds.has(v.videoId)}
               saving={savingIds.has(v.videoId)}
-              membership={info?.playlistIds ?? new Set()}
+              membership={memberships.get(v.videoId) ?? new Set()}
               busyPlaylistIds={cardBusyEdges}
               playlists={playlists}
               isHovered={hoveredId === v.videoId}

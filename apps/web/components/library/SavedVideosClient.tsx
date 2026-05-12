@@ -129,7 +129,7 @@ export function SavedVideosClient({
       try {
         if (inPlaylist) {
           const res = await fetch(
-            `/api/playlists/${playlistId}/items?bookmarkId=${encodeURIComponent(b.bookmarkId)}`,
+            `/api/playlists/${playlistId}/items?youtubeId=${encodeURIComponent(b.youtubeId)}`,
             { method: "DELETE" },
           );
           if (!res.ok) throw new Error("Could not remove from playlist.");
@@ -149,7 +149,12 @@ export function SavedVideosClient({
           const res = await fetch(`/api/playlists/${playlistId}/items`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bookmarkId: b.bookmarkId }),
+            body: JSON.stringify({
+              youtubeId: b.youtubeId,
+              title: b.title,
+              channel: b.channel,
+              thumbnail: b.thumbnailUrl,
+            }),
           });
           if (!res.ok) throw new Error("Could not add to playlist.");
           setBookmarks((prev) =>
@@ -184,7 +189,12 @@ export function SavedVideosClient({
     const itemRes = await fetch(`/api/playlists/${playlist.id}/items`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookmarkId: b.bookmarkId }),
+      body: JSON.stringify({
+        youtubeId: b.youtubeId,
+        title: b.title,
+        channel: b.channel,
+        thumbnail: b.thumbnailUrl,
+      }),
     });
     if (!itemRes.ok) throw new Error("Saved playlist, but couldn't add video.");
     setBookmarks((prev) =>

@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-// Playlist membership. RLS for playlist_items gates by parent
-// playlist ownership (auth.jwt() ->> 'sub' must match the playlist's
-// user_id). The bookmark-ownership check below is belt-and-suspenders:
-// RLS on bookmarks SELECT hides non-owned rows, so a maybeSingle()
-// look-up returns null if the user is trying to attach a bookmark
-// that isn't theirs.
+// Playlist membership. After migration 0004, playlist_items stores
+// its own video snapshot (youtube_id, title, channel, thumbnail_url)
+// and is no longer tied to the bookmarks table — removing a bookmark
+// no longer cascades into playlists. RLS for playlist_items still
+// gates by parent playlist ownership.
 
-type AddBody = { bookmarkId?: string };
+type AddBody = {
+  youtubeId?: string;
+  title?: string;
+  channel?: string | null;
+  thumbnail?: string | null;
+};
 
 export async function POST(
   req: Request,
@@ -16,22 +20,14 @@ export async function POST(
 ) {
   const { id: playlistId } = await ctx.params;
   const body = (await req.json().catch(() => ({}))) as AddBody;
-  if (!body.bookmarkId) {
-    return NextResponse.json({ error: "bookmarkId required" }, { status: 400 });
+  if (!body.youtubeId || !body.title) {
+    return NextResponse.json(
+      { error: "youtubeId and title required" },
+      { status: 400 },
+    );
   }
 
   const supabase = await createSupabaseServerClient();
-
-  // Confirm the bookmark is visible to the user (RLS will return null
-  // for someone else's id) before we let it land in the playlist.
-  const { data: bookmark } = await supabase
-    .from("bookmarks")
-    .select("id")
-    .eq("id", body.bookmarkId)
-    .maybeSingle();
-  if (!bookmark) {
-    return NextResponse.json({ error: "bookmark not found" }, { status: 404 });
-  }
 
   // Append at the end. Concurrency is fine for v1's single-user-at-a-
   // time flow; if two adds race, the second silently gets the same
@@ -50,13 +46,24 @@ export async function POST(
     .from("playlist_items")
     .insert({
       playlist_id: playlistId,
-      bookmark_id: body.bookmarkId,
+      youtube_id: body.youtubeId,
+      title: body.title,
+      channel: body.channel ?? null,
+      thumbnail_url: body.thumbnail ?? null,
       position: nextPosition,
     })
     .select()
     .single();
 
   if (error) {
+    // 23505 = duplicate (playlist_id, youtube_id). Surface a clean
+    // 409 instead of a 500 so the UI can choose to ignore or message.
+    if (error.code === "23505") {
+      return NextResponse.json(
+        { error: "Video is already in this playlist." },
+        { status: 409 },
+      );
+    }
     console.error("playlist_items insert failed", error);
     return NextResponse.json({ error: "add failed" }, { status: 500 });
   }
@@ -69,10 +76,10 @@ export async function DELETE(
 ) {
   const { id: playlistId } = await ctx.params;
   const url = new URL(req.url);
-  const bookmarkId = url.searchParams.get("bookmarkId");
-  if (!bookmarkId) {
+  const youtubeId = url.searchParams.get("youtubeId");
+  if (!youtubeId) {
     return NextResponse.json(
-      { error: "bookmarkId required" },
+      { error: "youtubeId required" },
       { status: 400 },
     );
   }
@@ -82,7 +89,7 @@ export async function DELETE(
     .from("playlist_items")
     .delete()
     .eq("playlist_id", playlistId)
-    .eq("bookmark_id", bookmarkId);
+    .eq("youtube_id", youtubeId);
 
   if (error) {
     console.error("playlist_items delete failed", error);
