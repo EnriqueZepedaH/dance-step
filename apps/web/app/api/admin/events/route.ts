@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { ensureUser } from "@/lib/db/users";
+import { requireAdmin } from "@/lib/admin/requireAdmin";
 import { geocodeAddress } from "@/lib/mapbox/geocode";
 import type { TablesUpdate } from "@/lib/db/types";
 
@@ -66,18 +65,6 @@ function chicagoLocalToUtcIso(local: string): string {
 
   const offsetMs = epoch(fmt("UTC")) - epoch(fmt("America/Chicago"));
   return new Date(sample.getTime() + offsetMs).toISOString();
-}
-
-async function requireAdmin() {
-  const { userId } = await auth();
-  if (!userId) {
-    return { error: NextResponse.json({ error: "unauthenticated" }, { status: 401 }) };
-  }
-  const user = await ensureUser();
-  if (user.role !== "admin") {
-    return { error: NextResponse.json({ error: "forbidden" }, { status: 403 }) };
-  }
-  return { userId };
 }
 
 export async function POST(req: Request) {
