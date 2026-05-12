@@ -1,22 +1,47 @@
 // Worker entrypoint. Designed to be invoked once per Railway Cron
 // tick (NOT a long-running daemon). Imports runIngest, awaits the
 // summary, and exits cleanly with the right status code so Railway
-// marks the cron-run success/failed accurately.
-//
-// Branch F lands this stub; branch P fills in runIngest in
-// ./ingest/run.ts.
+// marks each cron-run accurately.
+
+import { env } from "./env.js";
+import { supabase } from "./db.js";
+import { runIngest } from "./ingest/run.js";
 
 async function main(): Promise<void> {
-  // Lazy require so failures in env.ts surface as a process-level
-  // crash with the zod parse error, not a missed dynamic import.
-  await import("./env.js");
+  const sourceFilter = env.INGEST_SOURCES
+    ? env.INGEST_SOURCES.split(",").map((s) => s.trim()).filter(Boolean)
+    : undefined;
+
   console.log(
     JSON.stringify({
       ts: new Date().toISOString(),
       level: "info",
-      msg: "ingest-worker entrypoint hit — runIngest lands in branch P",
+      msg: "ingest-worker start",
+      source_filter: sourceFilter ?? "all-enabled",
     }),
   );
+
+  const summary = await runIngest(supabase, {
+    sourceFilter,
+    now: new Date(),
+  });
+
+  console.log(
+    JSON.stringify({
+      ts: new Date().toISOString(),
+      level: "info",
+      msg: "ingest-worker summary",
+      run_started_at: summary.runStartedAt,
+      per_source: summary.perSource,
+    }),
+  );
+
+  // Exit non-zero if any source failed. Railway uses the exit
+  // code to mark the cron run success/failed.
+  const anyFailed = summary.perSource.some((s) => s.status === "failed");
+  if (anyFailed) {
+    process.exit(2);
+  }
 }
 
 main().then(
@@ -28,6 +53,7 @@ main().then(
         level: "error",
         msg: "ingest-worker crashed",
         error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
       }),
     );
     process.exit(1);
