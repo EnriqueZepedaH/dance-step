@@ -149,5 +149,5 @@ insert into event_sources (key, display_name, kind, url, city, country, timezone
     'https://calendar.google.com/calendar/ical/c0670267847f53909b569c3ffdccac65d7ff12a8ea270b3e9daf0db5e2dc549c%40group.calendar.google.com/public/basic.ics',
     'Chicago', 'US', 'America/Chicago'),
   ('lsd', 'Latin Street Dancing', 'html',
-    'https://www.latinstreetdancing.com/upcoming-events/',
+    'https://www.latinstreetdancing.com/events/',
     'Chicago', 'US', 'America/Chicago');
