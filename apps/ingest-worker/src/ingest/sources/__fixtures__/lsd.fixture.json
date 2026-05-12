@@ -1,0 +1,164 @@
+[
+  {
+    "sourceEventId": "lsd:baila-tuesdays-barcocina-2026-05-12",
+    "rawPayload": {
+      "url": "https://www.latinstreetdancing.com/event/baila-tuesdays-may-12-2026/",
+      "title": "Baila Tuesdays | Barcocina",
+      "cover": "$10",
+      "when": "May 12, 2026 @ 8:00 PM - May 13, 2026 @ 1:00 AM",
+      "venue": "Barcocina West Town"
+    },
+    "normalized": {
+      "title": "Baila Tuesdays | Barcocina",
+      "description": "Dance lesson plus the best Salsa & Bachata DJs. Cover $10.",
+      "startsUtc": "2026-05-13T01:00:00.000Z",
+      "endsUtc": "2026-05-13T06:00:00.000Z",
+      "recurrenceRule": null,
+      "venue": {
+        "name": "Barcocina",
+        "address": "Barcocina West Town",
+        "city": "Chicago",
+        "country": "US",
+        "timezone": "America/Chicago"
+      },
+      "sourceUrl": "https://www.latinstreetdancing.com/event/baila-tuesdays-may-12-2026/",
+      "kind": "social",
+      "imageUrl": null
+    }
+  },
+  {
+    "sourceEventId": "lsd:tropical-wednesdays-la-victoria-2026-05-13",
+    "rawPayload": {
+      "url": "https://www.latinstreetdancing.com/event/tropical-wednesdays-may-13-2026/",
+      "title": "Tropical Wednesdays | La Victoria",
+      "cover": "$10 cover",
+      "when": "May 13, 2026 @ 8:00 PM - May 14, 2026 @ 2:00 AM",
+      "venue": "La Victoria Barra + Cocina Mexicana"
+    },
+    "normalized": {
+      "title": "Tropical Wednesdays | La Victoria",
+      "description": "3 DJs and a Salsa lesson every Wednesday. Cover $10.",
+      "startsUtc": "2026-05-14T01:00:00.000Z",
+      "endsUtc": "2026-05-14T07:00:00.000Z",
+      "recurrenceRule": null,
+      "venue": {
+        "name": "La Victoria Barra + Cocina Mexicana",
+        "address": "La Victoria Barra + Cocina Mexicana",
+        "city": "Chicago",
+        "country": "US",
+        "timezone": "America/Chicago"
+      },
+      "sourceUrl": "https://www.latinstreetdancing.com/event/tropical-wednesdays-may-13-2026/",
+      "kind": "social",
+      "imageUrl": null
+    }
+  },
+  {
+    "sourceEventId": "lsd:tropical-thursdays-barcocina-2026-05-14",
+    "rawPayload": {
+      "url": "https://www.latinstreetdancing.com/event/tropical-thursdays-may-14-2026/",
+      "title": "Tropical Thursdays",
+      "cover": "$10",
+      "when": "May 14, 2026 @ 8:30 PM - May 15, 2026 @ 2:00 AM",
+      "venue": "Barcocina"
+    },
+    "normalized": {
+      "title": "Tropical Thursdays",
+      "description": "Chicago's favorite Thursday Latin night. Cover $10.",
+      "startsUtc": "2026-05-15T01:30:00.000Z",
+      "endsUtc": "2026-05-15T07:00:00.000Z",
+      "recurrenceRule": null,
+      "venue": {
+        "name": "Barcocina",
+        "address": "Barcocina",
+        "city": "Chicago",
+        "country": "US",
+        "timezone": "America/Chicago"
+      },
+      "sourceUrl": "https://www.latinstreetdancing.com/event/tropical-thursdays-may-14-2026/",
+      "kind": "social",
+      "imageUrl": null
+    }
+  },
+  {
+    "sourceEventId": "lsd:tropical-fridays-las-fuentes-2026-05-15",
+    "rawPayload": {
+      "url": "https://www.latinstreetdancing.com/event/tropical-fridays-may-15-2026/",
+      "title": "Tropical Fridays",
+      "cover": "$15",
+      "when": "May 15, 2026 @ 9:00 PM - May 16, 2026 @ 4:00 AM",
+      "venue": "Las Fuentes, Lincoln Park"
+    },
+    "normalized": {
+      "title": "Tropical Fridays",
+      "description": "Various dance lessons; dancing until 4 AM. Cover $15.",
+      "startsUtc": "2026-05-16T02:00:00.000Z",
+      "endsUtc": "2026-05-16T09:00:00.000Z",
+      "recurrenceRule": null,
+      "venue": {
+        "name": "Las Fuentes",
+        "address": "Las Fuentes, Lincoln Park",
+        "city": "Chicago",
+        "country": "US",
+        "timezone": "America/Chicago"
+      },
+      "sourceUrl": "https://www.latinstreetdancing.com/event/tropical-fridays-may-15-2026/",
+      "kind": "social",
+      "imageUrl": null
+    }
+  },
+  {
+    "sourceEventId": "lsd:100-salsa-social-2026-05-29",
+    "rawPayload": {
+      "url": "https://www.latinstreetdancing.com/event/100-salsa-social-may-29-2026/",
+      "title": "100% Salsa Social",
+      "cover": "$10 - $15",
+      "when": "May 29, 2026 @ 8:30 PM - May 30, 2026 @ 1:30 AM",
+      "venue": "Latin Street Music & Dancing Studio"
+    },
+    "normalized": {
+      "title": "100% Salsa Social",
+      "description": "Pure salsa night at the studio. Cover $10-$15.",
+      "startsUtc": "2026-05-30T01:30:00.000Z",
+      "endsUtc": "2026-05-30T06:30:00.000Z",
+      "recurrenceRule": null,
+      "venue": {
+        "name": "Latin Street Music & Dancing Studio",
+        "address": "Latin Street Music & Dancing Studio",
+        "city": "Chicago",
+        "country": "US",
+        "timezone": "America/Chicago"
+      },
+      "sourceUrl": "https://www.latinstreetdancing.com/event/100-salsa-social-may-29-2026/",
+      "kind": "social",
+      "imageUrl": null
+    }
+  },
+  {
+    "sourceEventId": "lsd:kids-summer-dance-camp-2026-06-15",
+    "rawPayload": {
+      "url": "https://www.latinstreetdancing.com/event/kids-summer-dance-camp-2026/",
+      "title": "Kids Summer Dance Camp 2026",
+      "cover": null,
+      "when": "Jun 15, 2026 @ 9:00 AM - Jun 15, 2026 @ 1:30 PM",
+      "venue": "Latin Street Studio"
+    },
+    "normalized": {
+      "title": "Kids Summer Dance Camp 2026",
+      "description": "Kids & Teens (ages 4-12) Summer Camp.",
+      "startsUtc": "2026-06-15T14:00:00.000Z",
+      "endsUtc": "2026-06-15T18:30:00.000Z",
+      "recurrenceRule": null,
+      "venue": {
+        "name": "Latin Street Studio",
+        "address": "Latin Street Studio",
+        "city": "Chicago",
+        "country": "US",
+        "timezone": "America/Chicago"
+      },
+      "sourceUrl": "https://www.latinstreetdancing.com/event/kids-summer-dance-camp-2026/",
+      "kind": "class",
+      "imageUrl": null
+    }
+  }
+]

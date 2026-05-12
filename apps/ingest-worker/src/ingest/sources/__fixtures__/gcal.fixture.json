@@ -1,0 +1,148 @@
+[
+  {
+    "sourceEventId": "gcal:5fh6r1m50772seepsha8g0cpc2@google.com:2025-12-10",
+    "sequence": 0,
+    "rawPayload": {
+      "type": "VEVENT",
+      "uid": "5fh6r1m50772seepsha8g0cpc2@google.com",
+      "summary": "Salsa on a School Night",
+      "location": "Epiphany Center for the Arts, 201 S Ashland Ave, Chicago, IL 60607",
+      "start": "2025-12-11T01:00:00.000Z",
+      "description": "7p-12:30a — registration at the door"
+    },
+    "normalized": {
+      "title": "Salsa on a School Night",
+      "description": "7p-12:30a — registration at the door",
+      "startsUtc": "2025-12-11T01:00:00.000Z",
+      "endsUtc": null,
+      "recurrenceRule": null,
+      "venue": {
+        "name": "Epiphany Center for the Arts",
+        "address": "201 S Ashland Ave, Chicago, IL 60607",
+        "city": "Chicago",
+        "country": "US",
+        "timezone": "America/Chicago"
+      },
+      "sourceUrl": null,
+      "kind": "social",
+      "imageUrl": null
+    }
+  },
+  {
+    "sourceEventId": "gcal:abc-allstar-bi-weekly@google.com:2025-10-29",
+    "sequence": 1,
+    "rawPayload": {
+      "type": "VEVENT",
+      "uid": "abc-allstar-bi-weekly@google.com",
+      "summary": "All Star Seafood & Sports",
+      "location": "730 S Clark St, Chicago, IL 60605",
+      "start": "2025-10-30T01:30:00.000Z",
+      "rrule": "FREQ=WEEKLY;WKST=MO;UNTIL=20251210T055959Z;INTERVAL=2;BYDAY=WE",
+      "description": "8:30p-1:30a — bi-weekly Wednesday social"
+    },
+    "normalized": {
+      "title": "All Star Seafood & Sports",
+      "description": "8:30p-1:30a — bi-weekly Wednesday social",
+      "startsUtc": "2025-10-30T01:30:00.000Z",
+      "endsUtc": "2025-10-30T06:30:00.000Z",
+      "recurrenceRule": "FREQ=WEEKLY;WKST=MO;UNTIL=20251210T055959Z;INTERVAL=2;BYDAY=WE",
+      "venue": {
+        "name": "All Star Seafood & Sports",
+        "address": "730 S Clark St, Chicago, IL 60605",
+        "city": "Chicago",
+        "country": "US",
+        "timezone": "America/Chicago"
+      },
+      "sourceUrl": null,
+      "kind": "social",
+      "imageUrl": null
+    }
+  },
+  {
+    "sourceEventId": "gcal:390ahofoh5ekrkjlg65osvu8ah@google.com:2025-12-05",
+    "sequence": 0,
+    "rawPayload": {
+      "type": "VEVENT",
+      "uid": "390ahofoh5ekrkjlg65osvu8ah@google.com",
+      "summary": "Dennis PaSamba Dance Studio",
+      "location": "4820 W Irving Park, Chicago, IL 60641",
+      "start": "2025-12-06T01:00:00.000Z",
+      "description": "7p start; open practice"
+    },
+    "normalized": {
+      "title": "Dennis PaSamba Dance Studio",
+      "description": "7p start; open practice",
+      "startsUtc": "2025-12-06T01:00:00.000Z",
+      "endsUtc": null,
+      "recurrenceRule": null,
+      "venue": {
+        "name": "Dennis PaSamba Dance Studio",
+        "address": "4820 W Irving Park, Chicago, IL 60641",
+        "city": "Chicago",
+        "country": "US",
+        "timezone": "America/Chicago"
+      },
+      "sourceUrl": null,
+      "kind": "practica",
+      "imageUrl": null
+    }
+  },
+  {
+    "sourceEventId": "gcal:bachata-day-2025@google.com:2025-08-30",
+    "sequence": 0,
+    "rawPayload": {
+      "type": "VEVENT",
+      "uid": "bachata-day-2025@google.com",
+      "summary": "Chicago Loves Bachata Day",
+      "location": "Dance Center Chicago, 3868 N Lincoln Ave 2ND FLOOR, Chicago, IL 60613",
+      "start": "2025-08-31T03:00:00.000Z",
+      "description": "Bootcamp Noon-3pm + social dancing 10p-3a"
+    },
+    "normalized": {
+      "title": "Chicago Loves Bachata Day",
+      "description": "Bootcamp Noon-3pm + social dancing 10p-3a",
+      "startsUtc": "2025-08-31T03:00:00.000Z",
+      "endsUtc": null,
+      "recurrenceRule": null,
+      "venue": {
+        "name": "Dance Center Chicago",
+        "address": "3868 N Lincoln Ave 2ND FLOOR, Chicago, IL 60613",
+        "city": "Chicago",
+        "country": "US",
+        "timezone": "America/Chicago"
+      },
+      "sourceUrl": null,
+      "kind": "festival",
+      "imageUrl": null
+    }
+  },
+  {
+    "sourceEventId": "gcal:sensual-movement-2026@google.com:2026-05-22",
+    "sequence": 0,
+    "rawPayload": {
+      "type": "VEVENT",
+      "uid": "sensual-movement-2026@google.com",
+      "summary": "Sensual Movement",
+      "location": "Theme House, 610 W 24th Pl, Chicago, IL 60616",
+      "start": "2026-05-23T02:00:00.000Z",
+      "description": "9p-1:30a"
+    },
+    "normalized": {
+      "title": "Sensual Movement",
+      "description": "9p-1:30a",
+      "startsUtc": "2026-05-23T02:00:00.000Z",
+      "endsUtc": null,
+      "recurrenceRule": null,
+      "venue": {
+        "name": "Theme House",
+        "address": "610 W 24th Pl, Chicago, IL 60616",
+        "city": "Chicago",
+        "country": "US",
+        "timezone": "America/Chicago"
+      },
+      "sourceUrl": null,
+      "kind": "social",
+      "imageUrl": null
+    }
+  }
+]
