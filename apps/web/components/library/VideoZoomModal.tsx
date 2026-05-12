@@ -131,6 +131,7 @@ export function VideoZoomModal({
                   onToggle={onTogglePlaylist}
                   onCreate={onCreatePlaylist}
                   onClose={() => setPopoverOpen(false)}
+                  placement="top"
                 />
               ) : null}
             </div>

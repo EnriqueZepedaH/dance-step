@@ -8,10 +8,15 @@ export type PlaylistOption = { id: string; name: string };
 type Props = {
   playlists: PlaylistOption[];
   membership: Set<string>;            // playlistIds this video is in
-  busyIds: Set<string>;               // playlistIds with an in-flight toggle
+  busyIds: Set<string>;                // playlistIds with an in-flight toggle
   onToggle: (playlistId: string) => void;
   onCreate: (name: string) => Promise<void> | void;
   onClose: () => void;
+  // Anchor side. "bottom" drops the popover below the trigger
+  // (default; right for cards in a flowing grid). "top" lifts it
+  // above the trigger — used inside the zoom modal where the
+  // actions row sits near the bottom of the viewport.
+  placement?: "top" | "bottom";
 };
 
 const MAX_NAME = 40;
@@ -23,12 +28,20 @@ export function AddToPlaylistPopover({
   onToggle,
   onCreate,
   onClose,
+  placement = "bottom",
 }: Props) {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+
+  const showFilter = playlists.length > 8;
+  const q = filter.trim().toLowerCase();
+  const visible = q
+    ? playlists.filter((p) => p.name.toLowerCase().includes(q))
+    : playlists;
 
   // Click-outside + Escape to dismiss.
   useEffect(() => {
@@ -68,7 +81,12 @@ export function AddToPlaylistPopover({
   }
 
   return (
-    <div className="atp-popover" ref={ref} role="dialog" aria-label="Add to playlist">
+    <div
+      className={`atp-popover atp-${placement}`}
+      ref={ref}
+      role="dialog"
+      aria-label="Add to playlist"
+    >
       <div className="atp-header">
         <span className="atp-title">Add to playlist</span>
         <button
@@ -85,8 +103,19 @@ export function AddToPlaylistPopover({
         <p className="atp-empty">No playlists yet — create one below.</p>
       ) : null}
 
+      {showFilter ? (
+        <input
+          type="search"
+          className="atp-filter"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          placeholder="Filter playlists…"
+          aria-label="Filter playlists"
+        />
+      ) : null}
+
       <ul className="atp-list">
-        {playlists.map((p) => {
+        {visible.map((p) => {
           const inPlaylist = membership.has(p.id);
           const pending = busyIds.has(p.id);
           return (
@@ -105,6 +134,9 @@ export function AddToPlaylistPopover({
             </li>
           );
         })}
+        {showFilter && visible.length === 0 ? (
+          <li className="atp-no-match">No playlists match.</li>
+        ) : null}
       </ul>
 
       {creating ? (

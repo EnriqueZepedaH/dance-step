@@ -1307,7 +1307,6 @@ h2, h3, h4 { margin: 0; }
 /* Add-to-playlist popover */
 .atp-popover {
   position: absolute;
-  top: calc(100% + 6px);
   right: 0;
   width: min(280px, 90vw);
   background: var(--cream);
@@ -1320,6 +1319,8 @@ h2, h3, h4 { margin: 0; }
   flex-direction: column;
   gap: 8px;
 }
+.atp-popover.atp-bottom { top: calc(100% + 6px); }
+.atp-popover.atp-top    { bottom: calc(100% + 6px); }
 .atp-header {
   display: flex;
   align-items: center;
@@ -1334,6 +1335,24 @@ h2, h3, h4 { margin: 0; }
 }
 .atp-empty {
   margin: 0;
+  font: italic 400 13px/1.4 inherit;
+  color: var(--ink-mute);
+}
+.atp-filter {
+  width: 100%;
+  padding: 7px 10px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: 400 13px/1.3 inherit;
+  color: var(--ink);
+}
+.atp-filter:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+.atp-no-match {
+  padding: 8px 10px;
   font: italic 400 13px/1.4 inherit;
   color: var(--ink-mute);
 }
