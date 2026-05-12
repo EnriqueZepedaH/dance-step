@@ -55,42 +55,114 @@ export type Database = {
           },
         ]
       }
+      event_sources: {
+        Row: {
+          city: string
+          country: string
+          created_at: string
+          display_name: string
+          enabled: boolean
+          key: string
+          kind: string
+          last_run_at: string | null
+          last_run_id: string | null
+          last_status: string | null
+          timezone: string
+          url: string
+        }
+        Insert: {
+          city: string
+          country: string
+          created_at?: string
+          display_name: string
+          enabled?: boolean
+          key: string
+          kind: string
+          last_run_at?: string | null
+          last_run_id?: string | null
+          last_status?: string | null
+          timezone: string
+          url: string
+        }
+        Update: {
+          city?: string
+          country?: string
+          created_at?: string
+          display_name?: string
+          enabled?: boolean
+          key?: string
+          kind?: string
+          last_run_at?: string | null
+          last_run_id?: string | null
+          last_status?: string | null
+          timezone?: string
+          url?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
+          city: string
+          content_hash: string | null
           created_at: string
           created_by: string | null
           description: string | null
           ends_at: string | null
           id: string
           kind: string | null
+          last_seen_at: string | null
+          missing_run_count: number
           recurrence: string | null
+          source: string | null
+          source_event_id: string | null
+          source_url: string | null
           starts_at: string
+          status: string
+          timezone: string
           title: string
           url: string | null
           venue_id: string | null
         }
         Insert: {
+          city?: string
+          content_hash?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           ends_at?: string | null
           id?: string
           kind?: string | null
+          last_seen_at?: string | null
+          missing_run_count?: number
           recurrence?: string | null
+          source?: string | null
+          source_event_id?: string | null
+          source_url?: string | null
           starts_at: string
+          status?: string
+          timezone?: string
           title: string
           url?: string | null
           venue_id?: string | null
         }
         Update: {
+          city?: string
+          content_hash?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           ends_at?: string | null
           id?: string
           kind?: string | null
+          last_seen_at?: string | null
+          missing_run_count?: number
           recurrence?: string | null
+          source?: string | null
+          source_event_id?: string | null
+          source_url?: string | null
           starts_at?: string
+          status?: string
+          timezone?: string
           title?: string
           url?: string | null
           venue_id?: string | null
@@ -109,6 +181,59 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "venues"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      ingest_runs: {
+        Row: {
+          archived_count: number
+          error: string | null
+          fetched_count: number
+          finished_at: string | null
+          id: string
+          log: Json
+          promoted_count: number
+          rejected_count: number
+          source: string
+          staged_count: number
+          started_at: string
+          status: string
+        }
+        Insert: {
+          archived_count?: number
+          error?: string | null
+          fetched_count?: number
+          finished_at?: string | null
+          id?: string
+          log?: Json
+          promoted_count?: number
+          rejected_count?: number
+          source: string
+          staged_count?: number
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          archived_count?: number
+          error?: string | null
+          fetched_count?: number
+          finished_at?: string | null
+          id?: string
+          log?: Json
+          promoted_count?: number
+          rejected_count?: number
+          source?: string
+          staged_count?: number
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingest_runs_source_fkey"
+            columns: ["source"]
+            isOneToOne: false
+            referencedRelation: "event_sources"
+            referencedColumns: ["key"]
           },
         ]
       }
@@ -200,6 +325,144 @@ export type Database = {
           },
         ]
       }
+      quality_rejections: {
+        Row: {
+          created_at: string
+          duplicate_of: string | null
+          id: string
+          raw_event_id: string
+          reason_code: string
+          reason_detail: string | null
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          run_id: string
+        }
+        Insert: {
+          created_at?: string
+          duplicate_of?: string | null
+          id?: string
+          raw_event_id: string
+          reason_code: string
+          reason_detail?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          run_id: string
+        }
+        Update: {
+          created_at?: string
+          duplicate_of?: string | null
+          id?: string
+          raw_event_id?: string
+          reason_code?: string
+          reason_detail?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quality_rejections_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quality_rejections_raw_event_id_fkey"
+            columns: ["raw_event_id"]
+            isOneToOne: false
+            referencedRelation: "raw_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quality_rejections_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quality_rejections_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ingest_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      raw_events: {
+        Row: {
+          content_hash: string
+          fetched_at: string
+          id: string
+          normalized: Json
+          outcome: string | null
+          outcome_detail: string | null
+          processed: boolean
+          promoted_event_id: string | null
+          raw_payload: Json
+          run_id: string
+          sequence: number | null
+          source: string
+          source_event_id: string
+        }
+        Insert: {
+          content_hash: string
+          fetched_at?: string
+          id?: string
+          normalized: Json
+          outcome?: string | null
+          outcome_detail?: string | null
+          processed?: boolean
+          promoted_event_id?: string | null
+          raw_payload: Json
+          run_id: string
+          sequence?: number | null
+          source: string
+          source_event_id: string
+        }
+        Update: {
+          content_hash?: string
+          fetched_at?: string
+          id?: string
+          normalized?: Json
+          outcome?: string | null
+          outcome_detail?: string | null
+          processed?: boolean
+          promoted_event_id?: string | null
+          raw_payload?: Json
+          run_id?: string
+          sequence?: number | null
+          source?: string
+          source_event_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raw_events_promoted_event_id_fkey"
+            columns: ["promoted_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "raw_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ingest_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "raw_events_source_fkey"
+            columns: ["source"]
+            isOneToOne: false
+            referencedRelation: "event_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       users: {
         Row: {
           created_at: string
@@ -224,30 +487,72 @@ export type Database = {
         }
         Relationships: []
       }
+      venue_geocode_cache: {
+        Row: {
+          fetched_at: string
+          lat: number
+          lng: number
+          neighborhood: string | null
+          normalized_address: string
+          place_name: string | null
+        }
+        Insert: {
+          fetched_at?: string
+          lat: number
+          lng: number
+          neighborhood?: string | null
+          normalized_address: string
+          place_name?: string | null
+        }
+        Update: {
+          fetched_at?: string
+          lat?: number
+          lng?: number
+          neighborhood?: string | null
+          normalized_address?: string
+          place_name?: string | null
+        }
+        Relationships: []
+      }
       venues: {
         Row: {
           address: string | null
+          city: string
+          country: string
           id: string
           lat: number | null
           lng: number | null
           name: string
           neighborhood: string | null
+          normalized_address: string | null
+          normalized_name: string | null
+          timezone: string
         }
         Insert: {
           address?: string | null
+          city?: string
+          country?: string
           id?: string
           lat?: number | null
           lng?: number | null
           name: string
           neighborhood?: string | null
+          normalized_address?: string | null
+          normalized_name?: string | null
+          timezone?: string
         }
         Update: {
           address?: string | null
+          city?: string
+          country?: string
           id?: string
           lat?: number | null
           lng?: number | null
           name?: string
           neighborhood?: string | null
+          normalized_address?: string | null
+          normalized_name?: string | null
+          timezone?: string
         }
         Relationships: []
       }
