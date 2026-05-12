@@ -71,7 +71,7 @@ Important proposal alignment: the original `PROJECT_PROPOSAL.md` Week 5 goal sti
 
 - Make focused commits by phase. Do not mix TypeScript migration, auth setup, schema, and feature work in one change.
 - Preserve the landing page visual output when extracting shared components.
-- Keep v1 scope disciplined. Do not add scrapers, comments, profiles, shared playlists, PWA/mobile, video upload, Supabase Storage, or analyzer backend work.
+- Keep v1 scope disciplined. The ingest-worker MAY scrape public event sources (e.g. WordPress event pages) when no structured surface exists, per the Scene ingestion plan; *otherwise* do not add scrapers, comments, profiles, shared playlists, PWA/mobile, video upload, Supabase Storage, or analyzer backend work.
 - Do not put DB queries in `proxy.ts`. Use it only for Clerk route gating.
 - Use explicit server-side admin checks in `app/admin/layout.tsx` and admin API handlers.
 - Keep service-role Supabase usage isolated in `lib/supabase/admin.ts` and narrow helpers only. Never import service-role code into client components.
