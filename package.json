@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
     "dev": "npm run dev -w web",
-    "build": "npm run build -w web",
+    "build": "npm run build -w @dancestep/db && npm run build -w web",
     "start": "npm run start -w web",
     "lint": "npm run lint -w web",
     "typecheck": "npm run typecheck -w web",

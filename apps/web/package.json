@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.3.0",
+    "@dancestep/db": "*",
     "@supabase/supabase-js": "^2.105.3",
     "lucide-react": "latest",
     "mapbox-gl": "^3.23.1",

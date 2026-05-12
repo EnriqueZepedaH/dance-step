@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Regenerates apps/web/lib/db/types.ts from the live Supabase schema.
-# Run after every migration; commit the diff alongside the SQL.
+# Regenerates packages/db/src/types.ts from the live Supabase schema,
+# then rebuilds the @dancestep/db workspace so consumers (apps/web,
+# apps/ingest-worker) get fresh .d.ts artifacts. Run after every
+# migration; commit the diff alongside the SQL.
 #
 # Resolves the project ref in this order:
 #   1. $SUPABASE_PROJECT_REF (e.g., set in CI)
@@ -31,9 +33,14 @@ if [ -z "${SUPABASE_PROJECT_REF:-}" ]; then
   exit 1
 fi
 
-mkdir -p apps/web/lib/db
+mkdir -p packages/db/src
 npx -y supabase@latest gen types typescript \
   --project-id "$SUPABASE_PROJECT_REF" \
-  > apps/web/lib/db/types.ts
+  > packages/db/src/types.ts
 
-echo "wrote apps/web/lib/db/types.ts (project: $SUPABASE_PROJECT_REF)"
+echo "wrote packages/db/src/types.ts (project: $SUPABASE_PROJECT_REF)"
+
+# Rebuild @dancestep/db so downstream consumers see fresh dist/.
+npm run build -w @dancestep/db
+
+echo "rebuilt @dancestep/db dist"
