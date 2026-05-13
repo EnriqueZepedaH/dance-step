@@ -1,67 +1,87 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { EventsMap, type VenueWithEvents } from "@/components/scene/EventsMap";
+import { SceneShell, type SceneEvent } from "@/components/scene/SceneShell";
 import { env } from "@/lib/env";
 
-// Server-fetches venues plus their upcoming events as a nested
-// resource. Filtering "future events" is done in JS rather than at
-// the DB level — supabase-js's nested filters are awkward, and the
-// payload is small (~6 venues × N events). RLS on venues + events
-// is public-select, so anon visitors get the full map.
+// Server-fetches every published event in the future, plus the
+// joined venue. SceneShell does the filter + map/list switch on
+// the client. Window is the worker's 8-week materialization
+// horizon — past_date / out_of_window are quality-gated upstream,
+// so anything we see here is in a sane time range already.
 
-type EventLite = {
+const WINDOW_DAYS = 56;
+
+type Row = {
   id: string;
   title: string;
+  description: string | null;
   starts_at: string;
+  ends_at: string | null;
   kind: string | null;
-};
-type VenueRow = {
-  id: string;
-  name: string;
-  neighborhood: string | null;
-  lat: number | null;
-  lng: number | null;
-  events: EventLite[] | null;
+  source: string | null;
+  source_url: string | null;
+  timezone: string;
+  venues: {
+    id: string;
+    name: string;
+    neighborhood: string | null;
+    lat: number | null;
+    lng: number | null;
+    timezone: string;
+  } | null;
 };
 
 export default async function ScenePage() {
   const supabase = await createSupabaseServerClient();
-  const nowIso = new Date().toISOString();
+  const now = new Date();
+  const horizonIso = new Date(
+    now.getTime() + WINDOW_DAYS * 24 * 60 * 60 * 1000,
+  ).toISOString();
+  const nowIso = now.toISOString();
 
-  // Filter events at the DB level: only published events with
-  // future start times. The previous "select all events then
-  // filter in JS" worked when there was just admin-seeded data
-  // (~96 rows); after migration 0005 the worker can promote
-  // hundreds of events per venue, and pulling them all just to
-  // drop the past ones is wasteful.
-  const { data, error } = await supabase
-    .from("venues")
-    .select(
-      "id, name, neighborhood, lat, lng, events!inner(id, title, starts_at, kind)",
-    )
-    .eq("events.status", "published")
-    .gte("events.starts_at", nowIso)
-    .order("name", { ascending: true });
+  const [{ data: events, error }, { data: sources }] = await Promise.all([
+    supabase
+      .from("events")
+      .select(
+        "id, title, description, starts_at, ends_at, kind, source, source_url, timezone, venues(id, name, neighborhood, lat, lng, timezone)",
+      )
+      .eq("status", "published")
+      .gte("starts_at", nowIso)
+      .lte("starts_at", horizonIso)
+      .order("starts_at", { ascending: true }),
+    supabase.from("event_sources").select("key, display_name"),
+  ]);
 
-  if (error) console.error("scene venues query failed", error);
+  if (error) console.error("scene events query failed", error);
 
-  const rows = (data ?? []) as unknown as VenueRow[];
+  const sourceNames: Record<string, string> = {};
+  for (const s of sources ?? []) sourceNames[s.key] = s.display_name;
 
-  const venues: VenueWithEvents[] = rows
+  const rows = (events ?? []) as unknown as Row[];
+
+  const cleaned: SceneEvent[] = rows
     .filter(
-      (v): v is VenueRow & { lat: number; lng: number } =>
-        v.lat !== null && v.lng !== null,
+      (r): r is Row & { venues: NonNullable<Row["venues"]> & { lat: number; lng: number } } =>
+        !!r.venues && r.venues.lat !== null && r.venues.lng !== null,
     )
-    .map((v) => ({
-      id: v.id,
-      name: v.name,
-      neighborhood: v.neighborhood,
-      lat: v.lat,
-      lng: v.lng,
-      events: (v.events ?? [])
-        .slice()
-        .sort((a, b) => a.starts_at.localeCompare(b.starts_at)),
-    }))
-    .filter((v) => v.events.length > 0);
+    .map((r) => ({
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      startsUtc: r.starts_at,
+      endsUtc: r.ends_at,
+      kind: r.kind,
+      source: r.source,
+      sourceUrl: r.source_url,
+      timezone: r.timezone,
+      venue: {
+        id: r.venues.id,
+        name: r.venues.name,
+        neighborhood: r.venues.neighborhood,
+        lat: r.venues.lat,
+        lng: r.venues.lng,
+        timezone: r.venues.timezone,
+      },
+    }));
 
   return (
     <section className="scene-page">
@@ -69,12 +89,17 @@ export default async function ScenePage() {
         <span className="eyebrow bullet">The Scene · Chicago</span>
         <h1 className="display">Where the floor is tonight.</h1>
         <p className="lede">
-          Click a pin to see the next few socials, classes, and rueda
-          nights at that venue.
+          {cleaned.length} upcoming socials, classes, and rueda nights — filter
+          by kind, neighborhood, or when. Click any event to add it to your
+          calendar.
         </p>
       </header>
 
-      <EventsMap venues={venues} mapboxToken={env.NEXT_PUBLIC_MAPBOX_TOKEN} />
+      <SceneShell
+        events={cleaned}
+        sourceNames={sourceNames}
+        mapboxToken={env.NEXT_PUBLIC_MAPBOX_TOKEN}
+      />
     </section>
   );
 }
