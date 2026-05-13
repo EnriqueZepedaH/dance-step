@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { EventDescription } from "@/components/scene/EventDescription";
 
 // Public event detail. Times are formatted server-side with an
 // explicit America/Chicago timeZone so the same string renders on
@@ -122,9 +123,10 @@ export default async function EventDetailPage({
         ) : null}
       </dl>
 
-      {event.description ? (
-        <p className="lede event-description">{event.description}</p>
-      ) : null}
+      <EventDescription
+        description={event.description}
+        className="lede event-description"
+      />
 
       <div className="event-actions">
         {mapsUrl ? (

@@ -17,7 +17,6 @@ type Row = {
   starts_at: string;
   ends_at: string | null;
   kind: string | null;
-  source: string | null;
   source_url: string | null;
   timezone: string;
   venues: {
@@ -51,23 +50,17 @@ export default async function ScenePage({ searchParams }: ScenePageProps) {
   ).toISOString();
   const nowIso = now.toISOString();
 
-  const [{ data: events, error }, { data: sources }] = await Promise.all([
-    supabase
-      .from("events")
-      .select(
-        "id, title, description, starts_at, ends_at, kind, source, source_url, timezone, venues(id, name, neighborhood, lat, lng, timezone)",
-      )
-      .eq("status", "published")
-      .gte("starts_at", nowIso)
-      .lte("starts_at", horizonIso)
-      .order("starts_at", { ascending: true }),
-    supabase.from("event_sources").select("key, display_name"),
-  ]);
+  const { data: events, error } = await supabase
+    .from("events")
+    .select(
+      "id, title, description, starts_at, ends_at, kind, source_url, timezone, venues(id, name, neighborhood, lat, lng, timezone)",
+    )
+    .eq("status", "published")
+    .gte("starts_at", nowIso)
+    .lte("starts_at", horizonIso)
+    .order("starts_at", { ascending: true });
 
   if (error) console.error("scene events query failed", error);
-
-  const sourceNames: Record<string, string> = {};
-  for (const s of sources ?? []) sourceNames[s.key] = s.display_name;
 
   const rows = (events ?? []) as unknown as Row[];
 
@@ -83,7 +76,6 @@ export default async function ScenePage({ searchParams }: ScenePageProps) {
       startsUtc: r.starts_at,
       endsUtc: r.ends_at,
       kind: r.kind,
-      source: r.source,
       sourceUrl: r.source_url,
       timezone: r.timezone,
       venue: {
@@ -110,7 +102,6 @@ export default async function ScenePage({ searchParams }: ScenePageProps) {
 
       <SceneShell
         events={cleaned}
-        sourceNames={sourceNames}
         mapboxToken={env.NEXT_PUBLIC_MAPBOX_TOKEN}
         initialMonth={initialMonth}
       />

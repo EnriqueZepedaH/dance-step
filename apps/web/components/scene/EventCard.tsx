@@ -1,10 +1,15 @@
 import Link from "next/link";
-import { CalendarPlus, ExternalLink, MapPin } from "lucide-react";
+import {
+  CalendarDays,
+  CalendarPlus,
+  ExternalLink,
+  MapPin,
+} from "lucide-react";
 import type { SceneEvent } from "./SceneShell";
+import { EventDescription } from "./EventDescription";
 
 type Props = {
   event: SceneEvent;
-  sourceLabel: string | null;
 };
 
 // Time is rendered in the EVENT'S timezone (venue's tz), not the
@@ -12,50 +17,82 @@ type Props = {
 // reading from. For Chicago events (only city in v1) this is
 // always America/Chicago.
 function makeFmt(timeZone: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone,
-  });
+  return {
+    month: new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      timeZone,
+    }),
+    day: new Intl.DateTimeFormat("en-US", {
+      day: "numeric",
+      timeZone,
+    }),
+    weekday: new Intl.DateTimeFormat("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      timeZone,
+    }),
+    time: new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone,
+    }),
+  };
 }
 
-export function EventCard({ event, sourceLabel }: Props) {
+export function EventCard({ event }: Props) {
   const fmt = makeFmt(event.timezone);
   const start = new Date(event.startsUtc);
   const end = event.endsUtc ? new Date(event.endsUtc) : null;
+  const timeLabel = end
+    ? `${fmt.time.format(start)} – ${fmt.time.format(end)}`
+    : fmt.time.format(start);
 
   return (
     <article className="event-card">
-      <div className="event-card-head">
-        <Link href={`/scene/events/${event.id}`} className="event-card-title">
-          {event.title}
-        </Link>
-        {sourceLabel ? (
-          <span className="pill pill-mute" title={`from ${sourceLabel}`}>
-            via {sourceLabel}
-          </span>
-        ) : null}
+      <div className="event-card-top">
+        <div className="event-card-date" aria-hidden>
+          <span>{fmt.month.format(start)}</span>
+          <strong>{fmt.day.format(start)}</strong>
+        </div>
+
+        <div className="event-card-main">
+          <div className="event-card-head">
+            <Link
+              href={`/scene/events/${event.id}`}
+              className="event-card-title"
+            >
+              {event.title}
+            </Link>
+            <div className="event-card-pills">
+              {event.kind ? <span className="pill">{event.kind}</span> : null}
+            </div>
+          </div>
+
+          <div className="event-card-meta-list">
+            <div className="event-card-meta">
+              <CalendarDays size={15} strokeWidth={1.7} aria-hidden />
+              <time dateTime={event.startsUtc}>
+                {fmt.weekday.format(start)} · {timeLabel}
+              </time>
+            </div>
+
+            <div className="event-card-meta">
+              <MapPin size={15} strokeWidth={1.7} aria-hidden />
+              <span>{event.venue.name}</span>
+              {event.venue.neighborhood ? (
+                <span className="row-meta"> · {event.venue.neighborhood}</span>
+              ) : null}
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="event-card-meta">
-        <time dateTime={event.startsUtc}>{fmt.format(start)}</time>
-        {end ? <span> – {fmt.format(end)}</span> : null}
-      </div>
-
-      <div className="event-card-meta">
-        <MapPin size={14} strokeWidth={1.7} aria-hidden />{" "}
-        <span>{event.venue.name}</span>
-        {event.venue.neighborhood ? (
-          <span className="row-meta"> · {event.venue.neighborhood}</span>
-        ) : null}
-      </div>
-
-      {event.description ? (
-        <p className="event-card-body">{event.description.slice(0, 240)}{event.description.length > 240 ? "…" : ""}</p>
-      ) : null}
+      <EventDescription
+        description={event.description}
+        className="event-card-body"
+        maxLength={260}
+      />
 
       <div className="event-card-actions">
         <a

@@ -14,7 +14,6 @@ import {
 
 type Props = {
   events: SceneEvent[];
-  sourceNames: Record<string, string>;
   selectedDate: DateKey | null;
   onSelectDate: (next: DateKey | null) => void;
 };
@@ -23,7 +22,6 @@ const RAIL_LENGTH = 14;
 
 export function SceneListView({
   events,
-  sourceNames,
   selectedDate,
   onSelectDate,
 }: Props) {
@@ -93,13 +91,7 @@ export function SceneListView({
               </h2>
               <div className="scene-list">
                 {items.map((e) => (
-                  <EventCard
-                    key={e.id}
-                    event={e}
-                    sourceLabel={
-                      e.source ? (sourceNames[e.source] ?? e.source) : null
-                    }
-                  />
+                  <EventCard key={e.id} event={e} />
                 ))}
               </div>
             </section>

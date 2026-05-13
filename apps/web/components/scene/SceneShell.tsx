@@ -22,7 +22,6 @@ export type SceneEvent = {
   startsUtc: string;
   endsUtc: string | null;
   kind: string | null;
-  source: string | null;
   sourceUrl: string | null;
   timezone: string;
   venue: {
@@ -39,7 +38,6 @@ export type SceneViewMode = "list" | "calendar" | "map";
 
 type Props = {
   events: SceneEvent[];
-  sourceNames: Record<string, string>;
   mapboxToken: string | undefined;
   initialMonth: MonthKey;
 };
@@ -55,7 +53,6 @@ function parseView(raw: string | null, fallback: SceneViewMode): SceneViewMode {
 
 export function SceneShell({
   events,
-  sourceNames,
   mapboxToken,
   initialMonth,
 }: Props) {
@@ -168,7 +165,6 @@ export function SceneShell({
       {view === "list" ? (
         <SceneListView
           events={filtered}
-          sourceNames={sourceNames}
           selectedDate={selectedDate}
           onSelectDate={setSelectedDate}
         />
