@@ -19,6 +19,7 @@ const ADMIN_NAV = [
   { href: "/admin/scene/sources", label: "Scene · Sources" },
   { href: "/admin/scene/runs", label: "Scene · Runs" },
   { href: "/admin/scene/rejections", label: "Scene · Rejections" },
+  { href: "/admin/scene/duplicates", label: "Scene · Duplicates" },
   { href: "/library", label: "Library" },
 ];
 
