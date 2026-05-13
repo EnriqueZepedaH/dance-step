@@ -8,22 +8,47 @@ import { env } from "@/lib/env";
 // payload is small (~6 venues × N events). RLS on venues + events
 // is public-select, so anon visitors get the full map.
 
+type EventLite = {
+  id: string;
+  title: string;
+  starts_at: string;
+  kind: string | null;
+};
+type VenueRow = {
+  id: string;
+  name: string;
+  neighborhood: string | null;
+  lat: number | null;
+  lng: number | null;
+  events: EventLite[] | null;
+};
+
 export default async function ScenePage() {
   const supabase = await createSupabaseServerClient();
   const nowIso = new Date().toISOString();
 
+  // Filter events at the DB level: only published events with
+  // future start times. The previous "select all events then
+  // filter in JS" worked when there was just admin-seeded data
+  // (~96 rows); after migration 0005 the worker can promote
+  // hundreds of events per venue, and pulling them all just to
+  // drop the past ones is wasteful.
   const { data, error } = await supabase
     .from("venues")
     .select(
-      "id, name, neighborhood, lat, lng, events(id, title, starts_at, kind)",
+      "id, name, neighborhood, lat, lng, events!inner(id, title, starts_at, kind)",
     )
+    .eq("events.status", "published")
+    .gte("events.starts_at", nowIso)
     .order("name", { ascending: true });
 
   if (error) console.error("scene venues query failed", error);
 
-  const venues: VenueWithEvents[] = (data ?? [])
+  const rows = (data ?? []) as unknown as VenueRow[];
+
+  const venues: VenueWithEvents[] = rows
     .filter(
-      (v): v is typeof v & { lat: number; lng: number } =>
+      (v): v is VenueRow & { lat: number; lng: number } =>
         v.lat !== null && v.lng !== null,
     )
     .map((v) => ({
@@ -33,7 +58,7 @@ export default async function ScenePage() {
       lat: v.lat,
       lng: v.lng,
       events: (v.events ?? [])
-        .filter((e) => e.starts_at >= nowIso)
+        .slice()
         .sort((a, b) => a.starts_at.localeCompare(b.starts_at)),
     }))
     .filter((v) => v.events.length > 0);
