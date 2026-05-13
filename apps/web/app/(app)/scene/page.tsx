@@ -1,12 +1,12 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { SceneShell, type SceneEvent } from "@/components/scene/SceneShell";
 import { env } from "@/lib/env";
+import { chicagoCurrentMonth, isValidMonthKey } from "@/lib/scene/dates";
 
 // Server-fetches every published event in the future, plus the
-// joined venue. SceneShell does the filter + map/list switch on
-// the client. Window is the worker's 8-week materialization
-// horizon — past_date / out_of_window are quality-gated upstream,
-// so anything we see here is in a sane time range already.
+// joined venue. SceneShell does the filter + view switching on the
+// client. Window is the worker's 8-week materialization horizon —
+// past_date / out_of_window are quality-gated upstream.
 
 const WINDOW_DAYS = 56;
 
@@ -30,7 +30,20 @@ type Row = {
   } | null;
 };
 
-export default async function ScenePage() {
+type ScenePageProps = {
+  searchParams: Promise<{
+    view?: string;
+    date?: string;
+    month?: string;
+  }>;
+};
+
+export default async function ScenePage({ searchParams }: ScenePageProps) {
+  const sp = await searchParams;
+  const initialMonth = isValidMonthKey(sp.month)
+    ? sp.month
+    : chicagoCurrentMonth();
+
   const supabase = await createSupabaseServerClient();
   const now = new Date();
   const horizonIso = new Date(
@@ -99,6 +112,7 @@ export default async function ScenePage() {
         events={cleaned}
         sourceNames={sourceNames}
         mapboxToken={env.NEXT_PUBLIC_MAPBOX_TOKEN}
+        initialMonth={initialMonth}
       />
     </section>
   );

@@ -1,7 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import Map, { Marker, NavigationControl, Popup } from "react-map-gl/mapbox";
+import { useEffect, useMemo, useRef, useState } from "react";
+import MapboxMap, {
+  Marker,
+  NavigationControl,
+  Popup,
+  type MapRef,
+} from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import Link from "next/link";
 
@@ -24,6 +29,8 @@ export type VenueWithEvents = {
 type Props = {
   venues: VenueWithEvents[];
   mapboxToken: string | undefined;
+  selectedVenueId?: string | null;
+  onSelectVenue?: (id: string | null) => void;
 };
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
@@ -35,8 +42,40 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/Chicago",
 });
 
-export function EventsMap({ venues, mapboxToken }: Props) {
-  const [selected, setSelected] = useState<VenueWithEvents | null>(null);
+export function EventsMap({
+  venues,
+  mapboxToken,
+  selectedVenueId,
+  onSelectVenue,
+}: Props) {
+  const mapRef = useRef<MapRef | null>(null);
+  const controlled = selectedVenueId !== undefined;
+  const [internal, setInternal] = useState<string | null>(null);
+  const currentId = controlled ? (selectedVenueId ?? null) : internal;
+
+  const venueById = useMemo(() => {
+    const m = new Map<string, VenueWithEvents>();
+    for (const v of venues) m.set(v.id, v);
+    return m;
+  }, [venues]);
+
+  const selected = currentId ? (venueById.get(currentId) ?? null) : null;
+
+  // When the sidebar selects a venue, pan the map to it so the user
+  // sees the highlighted pin without scrolling the map manually.
+  useEffect(() => {
+    if (!selected) return;
+    mapRef.current?.flyTo({
+      center: [selected.lng, selected.lat],
+      zoom: 13,
+      duration: 600,
+    });
+  }, [selected]);
+
+  function setSelection(id: string | null) {
+    if (onSelectVenue) onSelectVenue(id);
+    if (!controlled) setInternal(id);
+  }
 
   if (!mapboxToken) {
     return (
@@ -51,7 +90,8 @@ export function EventsMap({ venues, mapboxToken }: Props) {
 
   return (
     <div className="map-shell">
-      <Map
+      <MapboxMap
+        ref={mapRef}
         mapboxAccessToken={mapboxToken}
         initialViewState={{ longitude: -87.65, latitude: 41.88, zoom: 11 }}
         mapStyle="mapbox://styles/mapbox/light-v11"
@@ -67,10 +107,13 @@ export function EventsMap({ venues, mapboxToken }: Props) {
             anchor="bottom"
             onClick={(e) => {
               e.originalEvent.stopPropagation();
-              setSelected(v);
+              setSelection(v.id);
             }}
           >
-            <span className="map-pin" aria-label={v.name} />
+            <span
+              className={`map-pin${currentId === v.id ? " is-selected" : ""}`}
+              aria-label={v.name}
+            />
           </Marker>
         ))}
 
@@ -81,7 +124,7 @@ export function EventsMap({ venues, mapboxToken }: Props) {
             anchor="top"
             offset={12}
             closeOnClick={false}
-            onClose={() => setSelected(null)}
+            onClose={() => setSelection(null)}
           >
             <div className="map-popup">
               <h3>{selected.name}</h3>
@@ -105,7 +148,7 @@ export function EventsMap({ venues, mapboxToken }: Props) {
             </div>
           </Popup>
         ) : null}
-      </Map>
+      </MapboxMap>
     </div>
   );
 }

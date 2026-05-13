@@ -1,8 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { EventsMap, type VenueWithEvents } from "./EventsMap";
-import { EventCard } from "./EventCard";
+import { useCallback, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { SceneViewNav } from "./SceneViewNav";
+import { SceneFilters } from "./SceneFilters";
+import { SceneListView } from "./SceneListView";
+import { SceneCalendarView } from "./SceneCalendarView";
+import { SceneMapView } from "./SceneMapView";
+import {
+  chicagoCurrentMonth,
+  isValidDateKey,
+  isValidMonthKey,
+  type DateKey,
+  type MonthKey,
+} from "@/lib/scene/dates";
 
 export type SceneEvent = {
   id: string;
@@ -24,23 +35,49 @@ export type SceneEvent = {
   };
 };
 
+export type SceneViewMode = "list" | "calendar" | "map";
+
 type Props = {
   events: SceneEvent[];
   sourceNames: Record<string, string>;
   mapboxToken: string | undefined;
+  initialMonth: MonthKey;
 };
 
-type ViewMode = "map" | "list";
-type TimeWindow = "today" | "week" | "all";
+const NEIGHBORHOOD_MIN = 3;
+const VALID_VIEWS: SceneViewMode[] = ["list", "calendar", "map"];
 
-const NEIGHBORHOOD_MIN = 3; // hide neighborhood filter unless ≥3 venues have one
+function parseView(raw: string | null, fallback: SceneViewMode): SceneViewMode {
+  return raw && (VALID_VIEWS as string[]).includes(raw)
+    ? (raw as SceneViewMode)
+    : fallback;
+}
 
-export function SceneShell({ events, sourceNames, mapboxToken }: Props) {
-  const [view, setView] = useState<ViewMode>("list");
+export function SceneShell({
+  events,
+  sourceNames,
+  mapboxToken,
+  initialMonth,
+}: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // URL is the source of truth for view/date/month. Missing view/date
+  // intentionally mean default list view and no selected date, even
+  // after client-side query updates.
+  const view = parseView(searchParams.get("view"), "list");
+  const dateParam = searchParams.get("date");
+  const monthParam = searchParams.get("month");
+  const selectedDate: DateKey | null = isValidDateKey(dateParam)
+    ? dateParam
+    : null;
+  const month: MonthKey = isValidMonthKey(monthParam)
+    ? monthParam
+    : initialMonth;
+
   const [kind, setKind] = useState<string>("all");
   const [neighborhood, setNeighborhood] = useState<string>("all");
-  const [timeWindow, setTimeWindow] = useState<TimeWindow>("all");
-  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const { kinds, neighborhoods } = useMemo(() => {
     const k = new Set<string>();
@@ -49,22 +86,12 @@ export function SceneShell({ events, sourceNames, mapboxToken }: Props) {
       if (e.kind) k.add(e.kind);
       if (e.venue.neighborhood) n.add(e.venue.neighborhood);
     }
-    return {
-      kinds: [...k].sort(),
-      neighborhoods: [...n].sort(),
-    };
+    return { kinds: [...k].sort(), neighborhoods: [...n].sort() };
   }, [events]);
 
   const showNeighborhoodFilter = neighborhoods.length >= NEIGHBORHOOD_MIN;
 
   const filtered = useMemo(() => {
-    const now = Date.now();
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
-    const weekEnd = new Date();
-    weekEnd.setDate(weekEnd.getDate() + 7);
-    weekEnd.setHours(23, 59, 59, 999);
-
     return events.filter((e) => {
       if (kind !== "all" && e.kind !== kind) return false;
       if (
@@ -74,156 +101,85 @@ export function SceneShell({ events, sourceNames, mapboxToken }: Props) {
       ) {
         return false;
       }
-      const ts = new Date(e.startsUtc).getTime();
-      if (timeWindow === "today" && ts > todayEnd.getTime()) return false;
-      if (timeWindow === "week" && ts > weekEnd.getTime()) return false;
-      if (ts < now) return false;
       return true;
     });
-  }, [events, kind, neighborhood, timeWindow, showNeighborhoodFilter]);
+  }, [events, kind, neighborhood, showNeighborhoodFilter]);
 
-  const venuesForMap: VenueWithEvents[] = useMemo(() => {
-    const byVenue = new Map<string, VenueWithEvents>();
-    for (const e of filtered) {
-      const existing = byVenue.get(e.venue.id);
-      if (existing) {
-        existing.events.push({
-          id: e.id,
-          title: e.title,
-          starts_at: e.startsUtc,
-          kind: e.kind,
-        });
-      } else {
-        byVenue.set(e.venue.id, {
-          id: e.venue.id,
-          name: e.venue.name,
-          neighborhood: e.venue.neighborhood,
-          lat: e.venue.lat,
-          lng: e.venue.lng,
-          events: [
-            {
-              id: e.id,
-              title: e.title,
-              starts_at: e.startsUtc,
-              kind: e.kind,
-            },
-          ],
-        });
-      }
-    }
-    return [...byVenue.values()];
-  }, [filtered]);
+  const pushQuery = useCallback(
+    (mutate: (params: URLSearchParams) => void) => {
+      const next = new URLSearchParams(searchParams.toString());
+      mutate(next);
+      const qs = next.toString();
+      router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
+
+  const setView = useCallback(
+    (next: SceneViewMode) => {
+      pushQuery((p) => {
+        if (next === "list") p.delete("view");
+        else p.set("view", next);
+        // Clear view-specific params so toggling views doesn't carry
+        // stale `date`/`month` keys into a view that ignores them.
+        if (next !== "list") p.delete("date");
+        if (next !== "calendar") p.delete("month");
+      });
+    },
+    [pushQuery],
+  );
+
+  const setSelectedDate = useCallback(
+    (next: DateKey | null) => {
+      pushQuery((p) => {
+        if (next) p.set("date", next);
+        else p.delete("date");
+      });
+    },
+    [pushQuery],
+  );
+
+  const setMonth = useCallback(
+    (next: MonthKey) => {
+      pushQuery((p) => {
+        if (next === chicagoCurrentMonth()) p.delete("month");
+        else p.set("month", next);
+      });
+    },
+    [pushQuery],
+  );
 
   return (
     <div className="scene-shell">
       <div className="scene-controls">
-        <div className="scene-view-toggle" role="tablist" aria-label="View">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={view === "list"}
-            className={view === "list" ? "is-active" : ""}
-            onClick={() => setView("list")}
-          >
-            List
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={view === "map"}
-            className={view === "map" ? "is-active" : ""}
-            onClick={() => setView("map")}
-          >
-            Map
-          </button>
-        </div>
-
-        <button
-          type="button"
-          className="scene-filter-toggle"
-          aria-expanded={filtersOpen}
-          onClick={() => setFiltersOpen((v) => !v)}
-        >
-          Filters{filtersOpen ? " ▲" : " ▼"}
-        </button>
-
-        <div
-          className={`scene-filters${filtersOpen ? " is-open" : ""}`}
-          role="region"
-          aria-label="Filters"
-        >
-          <label className="scene-filter">
-            <span>When</span>
-            <div className="scene-radio-row">
-              {(["today", "week", "all"] as TimeWindow[]).map((w) => (
-                <button
-                  key={w}
-                  type="button"
-                  className={timeWindow === w ? "is-active" : ""}
-                  onClick={() => setTimeWindow(w)}
-                >
-                  {w === "today" ? "Today" : w === "week" ? "This week" : "Upcoming"}
-                </button>
-              ))}
-            </div>
-          </label>
-
-          {kinds.length > 0 ? (
-            <label className="scene-filter">
-              <span>Kind</span>
-              <select
-                value={kind}
-                onChange={(e) => setKind(e.target.value)}
-              >
-                <option value="all">All kinds</option>
-                {kinds.map((k) => (
-                  <option key={k} value={k}>{k}</option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-
-          {showNeighborhoodFilter ? (
-            <label className="scene-filter">
-              <span>Neighborhood</span>
-              <select
-                value={neighborhood}
-                onChange={(e) => setNeighborhood(e.target.value)}
-              >
-                <option value="all">All neighborhoods</option>
-                {neighborhoods.map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-        </div>
-
-        <div className="scene-count row-meta">
-          {filtered.length} {filtered.length === 1 ? "event" : "events"}
-        </div>
+        <SceneViewNav view={view} onChange={setView} />
+        <SceneFilters
+          kind={kind}
+          kinds={kinds}
+          onKindChange={setKind}
+          neighborhood={neighborhood}
+          neighborhoods={neighborhoods}
+          showNeighborhoodFilter={showNeighborhoodFilter}
+          onNeighborhoodChange={setNeighborhood}
+          count={filtered.length}
+        />
       </div>
 
-      {view === "map" ? (
-        <EventsMap venues={venuesForMap} mapboxToken={mapboxToken} />
+      {view === "list" ? (
+        <SceneListView
+          events={filtered}
+          sourceNames={sourceNames}
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+        />
+      ) : view === "calendar" ? (
+        <SceneCalendarView
+          events={filtered}
+          month={month}
+          onMonthChange={setMonth}
+        />
       ) : (
-        <div className="scene-list">
-          {filtered.length === 0 ? (
-            <p className="search-status">
-              No events match these filters.
-            </p>
-          ) : (
-            filtered.map((e) => (
-              <EventCard
-                key={e.id}
-                event={e}
-                sourceLabel={
-                  e.source ? sourceNames[e.source] ?? e.source : null
-                }
-              />
-            ))
-          )}
-        </div>
+        <SceneMapView events={filtered} mapboxToken={mapboxToken} />
       )}
     </div>
   );
