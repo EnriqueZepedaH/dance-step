@@ -1,11 +1,10 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "npm ci && npm run build -w @dancestep/db && npm run build -w ingest-worker"
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "npm run start -w ingest-worker",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 1
   }

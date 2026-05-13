@@ -1,0 +1,16 @@
+node_modules
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/coverage
+**/.env
+**/.env.local
+**/.env.*
+!**/.env.example
+.git
+.github
+.claude
+.codex
+.mcp.json
+apps/web/app/api/debug
