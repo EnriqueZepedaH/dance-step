@@ -16,8 +16,10 @@ export const dynamic = "force-dynamic";
 
 const ADMIN_NAV = [
   { href: "/admin/events", label: "Events" },
+  { href: "/admin/scene/sources", label: "Scene · Sources" },
+  { href: "/admin/scene/runs", label: "Scene · Runs" },
+  { href: "/admin/scene/rejections", label: "Scene · Rejections" },
   { href: "/library", label: "Library" },
-  { href: "/scene", label: "The Scene" },
 ];
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
