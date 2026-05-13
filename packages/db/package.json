@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist",
-    "prepare": "npm run build"
+    "prepare": "test ! -f tsconfig.json || npm run build"
   },
   "devDependencies": {
     "typescript": "^6.0.3"
