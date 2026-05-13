@@ -2427,6 +2427,17 @@ h2, h3, h4 { margin: 0; }
   color: #a3251f;
   font: italic 400 12px/1.3 inherit;
 }
+
+.run-counts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font: 400 14px/1.4 inherit;
+  color: var(--ink);
+}
 .row-actions {
   white-space: nowrap;
   font: 500 13px/1.3 inherit;
