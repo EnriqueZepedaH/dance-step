@@ -32,21 +32,21 @@ test("isLikelyDuplicate: same venue + same time + slightly different title → d
   assert.equal(isLikelyDuplicate(a, b), true);
 });
 
-test("isLikelyDuplicate: same title + venue, time 30min apart → still dup (2 of 3)", () => {
-  // Title match (true) + venue match (true) + time match (false)
-  // = 2 of 3, rule fires.
+test("isLikelyDuplicate: same title + venue, time 30min apart → NOT dup (time required)", () => {
+  // Title and venue match but time is outside the 15-min window.
+  // Time is a necessary condition now, so this is NOT a dup. The
+  // alternative would re-collapse weekly recurring events that
+  // legitimately share title + venue across weeks.
   const a = t();
   const b = t({ startsAt: new Date("2026-05-13T01:30:00.000Z") });
-  assert.equal(isLikelyDuplicate(a, b), true);
+  assert.equal(isLikelyDuplicate(a, b), false);
 });
 
-test("isLikelyDuplicate: same venue + time, completely different title → not dup", () => {
-  // Only 2 of 3 needed, but venue match + time match = 2/3, so
-  // even with a different title this IS a duplicate. That's the
-  // designed behavior — two events at the same venue within 15
-  // min of each other are almost certainly the same listing
-  // titled differently across sources. Asserting the expected
-  // call rather than the rejection.
+test("isLikelyDuplicate: same venue + time, completely different title → dup", () => {
+  // Time match + venue match → dup (title bucket optional).
+  // Two listings at the same venue within 15 min of each other
+  // are almost certainly the same event titled differently
+  // across sources.
   const a = t({ titleNorm: "salsa tuesdays" });
   const b = t({ titleNorm: "drum circle workshop" });
   assert.equal(isLikelyDuplicate(a, b), true);
@@ -58,6 +58,16 @@ test("isLikelyDuplicate: different venue, same time, same title → dup", () => 
   const a = t();
   const b = t({ venueId: "v-other", venueNorm: "other place" });
   assert.equal(isLikelyDuplicate(a, b), true);
+});
+
+test("isLikelyDuplicate: weekly recurring event at SAME venue → NOT dup across weeks", () => {
+  // Real bug seen in live data: gcal RRULE-expands a weekly event
+  // into 8 occurrences. Without time-required, occurrences 2..8
+  // collapsed to occurrence 1 because title + venue matched.
+  // This is the regression guard.
+  const a = t();
+  const b = t({ startsAt: new Date("2026-05-20T01:00:00.000Z") });
+  assert.equal(isLikelyDuplicate(a, b), false);
 });
 
 test("isLikelyDuplicate: same title only, week apart, different venue → not dup", () => {

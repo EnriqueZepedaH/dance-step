@@ -10,15 +10,18 @@ import {
 
 // Cross-source duplicate detection.
 //
-// Three independent buckets:
+// Three buckets, with TIME as a necessary condition:
+//   time   — |start_a - start_b| ≤ 15 minutes   (REQUIRED)
 //   title  — slug + Levenshtein-normalized similarity ≥ 0.85
 //   venue  — same resolved venue_id OR normalized_name JW ≥ 0.9
-//   time   — |start_a - start_b| ≤ 15 minutes
 //
-// 2 of 3 buckets match → call it a duplicate. The loose title
-// threshold catches "Salsa Tuesdays @ Alhambra" vs "Salsa Tuesday
-// — Alhambra Palace"; the time + venue gates prevent two different
-// nights at the same venue from collapsing.
+// Duplicate iff (time match) AND (title match OR venue match).
+//
+// Time-required is the load-bearing rule: without it, weekly
+// recurring events at the same venue (gcal RRULE expansion) would
+// all collapse to one. The 15-min window is tight enough that a
+// "doors vs show time" difference between sources still survives
+// (admin can merge via /admin/scene/duplicates if it bites).
 
 const TITLE_THRESHOLD = 0.85;
 const VENUE_THRESHOLD = 0.9;
@@ -59,21 +62,15 @@ export function toTarget(
 
 // Pure: does `a` look like the same event as `b`?
 export function isLikelyDuplicate(a: DedupTarget, b: DedupTarget): boolean {
-  let buckets = 0;
-  if (levenshteinSimilarity(a.titleNorm, b.titleNorm) >= TITLE_THRESHOLD) buckets++;
-  if (a.venueId === b.venueId) {
-    buckets++;
-  } else if (
-    jaroWinklerSimilarity(a.venueNorm, b.venueNorm) >= VENUE_THRESHOLD
-  ) {
-    buckets++;
-  }
-  if (
-    Math.abs(a.startsAt.getTime() - b.startsAt.getTime()) <= TIME_WINDOW_MS
-  ) {
-    buckets++;
-  }
-  return buckets >= 2;
+  const timeMatch =
+    Math.abs(a.startsAt.getTime() - b.startsAt.getTime()) <= TIME_WINDOW_MS;
+  if (!timeMatch) return false;
+  const titleMatch =
+    levenshteinSimilarity(a.titleNorm, b.titleNorm) >= TITLE_THRESHOLD;
+  const venueMatch =
+    a.venueId === b.venueId ||
+    jaroWinklerSimilarity(a.venueNorm, b.venueNorm) >= VENUE_THRESHOLD;
+  return titleMatch || venueMatch;
 }
 
 // Check the in-run buffer first (other candidates from this run),
