@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -37,3 +38,25 @@ export async function ensureUser(): Promise<AppUser> {
   if (error) throw error;
   return data;
 }
+
+// Lightweight role lookup for anonymous-safe UI affordances (e.g. the
+// Footer's admin link). Returns null when no session — does NOT
+// upsert into users, so it's safe to call on every public page
+// render. React `cache()` dedupes within a single render.
+export const getCurrentUserRole = cache(async (): Promise<string | null> => {
+  const { userId } = await auth();
+  if (!userId) return null;
+
+  const admin = getSupabaseAdminClient();
+  const { data, error } = await admin
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("getCurrentUserRole failed", error);
+    return null;
+  }
+  return data?.role ?? null;
+});

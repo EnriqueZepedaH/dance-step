@@ -1,6 +1,11 @@
 import Link from "next/link";
 
-export function Footer() {
+import { getCurrentUserRole } from "@/lib/db/users";
+
+export async function Footer() {
+  const role = await getCurrentUserRole();
+  const isAdmin = role === "admin";
+
   return (
     <footer className="footer">
       <div className="brand-block">
@@ -24,6 +29,12 @@ export function Footer() {
           <Link href="/#manifesto">Manifesto</Link><br />
           <a href="#">Privacy</a><br />
           <a href="#">Contact</a>
+          {isAdmin ? (
+            <>
+              <br />
+              <Link href="/admin">Admin</Link>
+            </>
+          ) : null}
         </div>
         <div>
           <strong>© 2026</strong>
