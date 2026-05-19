@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test:flyer": "tsx --test \"lib/llm/*.test.ts\" \"lib/admin/*.test.ts\""
+    "test:flyer": "tsx --test \"lib/llm/*.test.ts\" \"lib/admin/*.test.ts\"",
+    "count:overhead": "tsx scripts/count-text-overhead.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",
