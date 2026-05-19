@@ -77,6 +77,7 @@ export function EventForm({ mode, venues, initial }: Props) {
   // /api/admin/events on POST.
   const [extractionId, setExtractionId] = useState<string | null>(null);
   const [original, setOriginal] = useState<ExtractedEvent | null>(null);
+  const [flyerPublic, setFlyerPublic] = useState(true);
 
   // Per-event location overrides. Default to Chicago/US/America/Chicago
   // so the current admin flow keeps working byte-for-byte; flyer
@@ -244,6 +245,7 @@ export function EventForm({ mode, venues, initial }: Props) {
             timezone,
             flyerExtractionId: extractionId ?? undefined,
             fieldsEdited: extractionId ? fieldsEdited : undefined,
+            flyerPublic: extractionId ? flyerPublic : undefined,
           }),
         });
       } else {
@@ -281,6 +283,24 @@ export function EventForm({ mode, venues, initial }: Props) {
           onExtracted={applyExtraction}
           onCleared={clearExtraction}
         />
+      ) : null}
+
+      {mode === "create" && extractionId ? (
+        <label className="flyer-public-toggle">
+          <input
+            type="checkbox"
+            checked={flyerPublic}
+            onChange={(e) => setFlyerPublic(e.target.checked)}
+          />
+          <span>
+            Show flyer on the public event page
+            <small>
+              When on, /scene/events/[id] renders the uploaded flyer to
+              visitors. When off, the flyer stays in private storage for
+              audit only.
+            </small>
+          </span>
+        </label>
       ) : null}
 
       <label>

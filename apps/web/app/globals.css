@@ -3361,6 +3361,34 @@ h2, h3, h4 { margin: 0; }
   color: var(--terracotta-deep);
 }
 
+.flyer-public-toggle {
+  display: grid !important;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.02);
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font: 500 14px/1.4 inherit !important;
+  color: var(--ink) !important;
+}
+.flyer-public-toggle input[type="checkbox"] {
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  cursor: pointer;
+}
+.flyer-public-toggle small {
+  display: block;
+  margin-top: 4px;
+  font: 400 12px/1.4 inherit;
+  color: var(--ink-mute);
+}
+
 /* ============================================================
    Lab — research preview waitlist
    ============================================================ */

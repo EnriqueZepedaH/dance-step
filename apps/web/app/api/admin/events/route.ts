@@ -43,6 +43,7 @@ type CreateBody = {
   timezone?: string;
   flyerExtractionId?: string;
   fieldsEdited?: string[];
+  flyerPublic?: boolean;
 };
 
 type PatchBody = {
@@ -230,6 +231,7 @@ export async function POST(req: Request) {
       timezone,
       flyer_storage_path: flyerStoragePath,
       flyer_extraction_id: body.flyerExtractionId ?? null,
+      flyer_public: body.flyerExtractionId ? body.flyerPublic === true : false,
     })
     .select()
     .single();
