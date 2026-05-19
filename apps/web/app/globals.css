@@ -3389,6 +3389,19 @@ h2, h3, h4 { margin: 0; }
   color: var(--ink-mute);
 }
 
+.event-flyer {
+  margin: 24px 0 0;
+  max-width: 480px;
+}
+.event-flyer img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--cream);
+}
+
 /* ============================================================
    Lab — research preview waitlist
    ============================================================ */

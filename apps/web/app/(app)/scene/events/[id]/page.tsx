@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { signedFlyerUrl } from "@/lib/storage/uploadFlyer";
 import { EventDescription } from "@/components/scene/EventDescription";
 
 // Public event detail. Times are formatted server-side with an
@@ -25,6 +26,8 @@ type EventDetail = {
   kind: string | null;
   description: string | null;
   url: string | null;
+  flyer_storage_path: string | null;
+  flyer_public: boolean;
   venues: Venue | null;
 };
 
@@ -53,7 +56,7 @@ export default async function EventDetailPage({
   const { data, error } = await supabase
     .from("events")
     .select(
-      "id, title, starts_at, ends_at, kind, description, url, venues(id, name, neighborhood, address, lat, lng)",
+      "id, title, starts_at, ends_at, kind, description, url, flyer_storage_path, flyer_public, venues(id, name, neighborhood, address, lat, lng)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -63,6 +66,18 @@ export default async function EventDetailPage({
 
   const event = data as unknown as EventDetail;
   const venue = event.venues;
+
+  // Mint a fresh signed URL per render when the admin opted the
+  // flyer into public view. Bucket stays private; signed URLs are
+  // the only path through which the bytes reach a visitor.
+  let flyerSrc: string | null = null;
+  if (event.flyer_public && event.flyer_storage_path) {
+    try {
+      flyerSrc = await signedFlyerUrl(event.flyer_storage_path);
+    } catch (e) {
+      console.error("flyer signed url failed", e);
+    }
+  }
 
   const start = new Date(event.starts_at);
   const end = event.ends_at ? new Date(event.ends_at) : null;
@@ -122,6 +137,13 @@ export default async function EventDetailPage({
           </div>
         ) : null}
       </dl>
+
+      {flyerSrc ? (
+        <figure className="event-flyer">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={flyerSrc} alt={`Flyer for ${event.title}`} />
+        </figure>
+      ) : null}
 
       <EventDescription
         description={event.description}
