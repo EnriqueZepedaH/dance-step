@@ -35,6 +35,8 @@ type CreateBody = {
     city?: string;
     country?: string;
     timezone?: string;
+    lat?: number;
+    lng?: number;
   } | null;
   city?: string;
   country?: string;
@@ -127,16 +129,38 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-    const hit = await geocodeVenue({
-      name,
-      address,
-      city: body.newVenue.city?.trim() || city,
-      country: (body.newVenue.country || country).toUpperCase(),
-    });
+    // Manual-coordinates escape hatch: when the form supplied valid
+    // lat/lng, skip the geocoder entirely and use them. Mapbox's POI
+    // database has gaps (especially in Latin America); the admin can
+    // paste coords from Google Maps to bypass.
+    const manualLat = body.newVenue.lat;
+    const manualLng = body.newVenue.lng;
+    const manualValid =
+      typeof manualLat === "number" &&
+      typeof manualLng === "number" &&
+      Number.isFinite(manualLat) &&
+      Number.isFinite(manualLng) &&
+      manualLat >= -90 &&
+      manualLat <= 90 &&
+      manualLng >= -180 &&
+      manualLng <= 180;
+
+    let hit: { lat: number; lng: number; precision: "address" | "city" | "manual" } | null;
+    if (manualValid) {
+      hit = { lat: manualLat, lng: manualLng, precision: "manual" };
+    } else {
+      const geo = await geocodeVenue({
+        name,
+        address,
+        city: body.newVenue.city?.trim() || city,
+        country: (body.newVenue.country || country).toUpperCase(),
+      });
+      hit = geo ? { ...geo, precision: geo.precision } : null;
+    }
     if (!hit) {
       return NextResponse.json(
         {
-          error: `Could not find "${name}" or "${address}" on the map. Try simplifying the address or use just the city + country.`,
+          error: `Could not find "${name}" or "${address}" on the map. Try simplifying the address, use just the city + country, or paste coordinates from Google Maps.`,
         },
         { status: 422 },
       );

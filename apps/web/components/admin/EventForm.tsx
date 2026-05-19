@@ -36,6 +36,22 @@ const DEFAULT_TZ = "America/Chicago";
 const DEFAULT_COUNTRY = "US";
 const DEFAULT_CITY = "Chicago";
 
+// Accepts "21.8853, -102.2916", "21.8853,-102.2916", or
+// "21.8853 -102.2916" — matches what Google Maps copies on "What's
+// here?". Returns null on anything malformed or out of range.
+function parseCoords(input: string): { lat: number; lng: number } | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+  const parts = trimmed.split(/[,\s]+/).filter(Boolean);
+  if (parts.length !== 2) return null;
+  const lat = Number(parts[0]);
+  const lng = Number(parts[1]);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat < -90 || lat > 90) return null;
+  if (lng < -180 || lng > 180) return null;
+  return { lat, lng };
+}
+
 export function EventForm({ mode, venues, initial }: Props) {
   const router = useRouter();
 
@@ -52,6 +68,7 @@ export function EventForm({ mode, venues, initial }: Props) {
   );
   const [newVenueName, setNewVenueName] = useState("");
   const [newVenueAddress, setNewVenueAddress] = useState("");
+  const [newVenueCoords, setNewVenueCoords] = useState("");
 
   // Flyer-extraction state. `original` is the untouched ExtractedEvent
   // we got back from /api/admin/flyers/extract — kept separate from
@@ -218,6 +235,7 @@ export function EventForm({ mode, venues, initial }: Props) {
                     city: city || undefined,
                     country: country || undefined,
                     timezone: timezone || undefined,
+                    ...(parseCoords(newVenueCoords) ?? {}),
                   },
                 }
               : { venueId }),
@@ -455,6 +473,30 @@ export function EventForm({ mode, venues, initial }: Props) {
                   </span>
                 ) : null}
               </div>
+
+              <label>
+                <span className="admin-form-label">
+                  Coordinates (optional override)
+                </span>
+                <input
+                  type="text"
+                  value={newVenueCoords}
+                  onChange={(e) => setNewVenueCoords(e.target.value)}
+                  placeholder="21.8853, -102.2916"
+                />
+                <small className="form-hint">
+                  Mapbox missing this place? Right-click in Google Maps →{" "}
+                  <em>What&apos;s here?</em> → click the coordinates row to
+                  copy. When filled, server uses these directly and skips
+                  the geocoder.
+                  {newVenueCoords.trim() && !parseCoords(newVenueCoords) ? (
+                    <span className="form-hint-error">
+                      {" "}
+                      Format: <code>lat, lng</code> with values in range.
+                    </span>
+                  ) : null}
+                </small>
+              </label>
             </>
           ) : null}
         </fieldset>

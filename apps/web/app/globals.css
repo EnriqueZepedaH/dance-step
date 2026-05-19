@@ -3343,6 +3343,23 @@ h2, h3, h4 { margin: 0; }
 .geocode-probe-status--error {
   color: var(--terracotta-deep);
 }
+.form-hint {
+  display: block;
+  margin-top: 4px;
+  font: 400 12px/1.4 inherit;
+  color: var(--ink-mute);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.form-hint code {
+  font: 400 11px/1 ui-monospace, monospace;
+  padding: 1px 4px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 3px;
+}
+.form-hint-error {
+  color: var(--terracotta-deep);
+}
 
 /* ============================================================
    Lab — research preview waitlist
