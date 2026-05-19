@@ -82,9 +82,14 @@ export function EventForm({ mode, venues, initial }: Props) {
     if (ex.endsLocal) setEndsAt(ex.endsLocal);
     if (ex.kind) setKind(ex.kind);
     if (ex.sourceUrl) setUrl(ex.sourceUrl);
-    if (ex.timezone) setTimezone(ex.timezone);
-    if (ex.city) setCity(ex.city);
-    if (ex.country) setCountry(ex.country);
+
+    // When the flyer doesn't surface city/country/timezone, clear the
+    // Chicago defaults so the form's `required` attribute forces the
+    // admin to type them. Better than silently saving an MX event as
+    // Chicago/US/America/Chicago.
+    setCity(ex.city ?? "");
+    setCountry(ex.country ?? "");
+    setTimezone(ex.timezone ?? "");
 
     if (ex.venueName || ex.venueAddress) {
       setUseNewVenue(true);

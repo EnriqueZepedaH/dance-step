@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin/requireAdmin";
-import { geocodeAddress } from "@/lib/mapbox/geocode";
+import { geocodeVenue } from "@/lib/mapbox/geocode";
 import { isValidIanaTimezone, localToUtcIso } from "@/lib/time/local";
 import type { TablesUpdate } from "@/lib/db/types";
 
@@ -127,11 +127,23 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
-    const hit = await geocodeAddress(address);
+    const hit = await geocodeVenue({
+      name,
+      address,
+      city: body.newVenue.city?.trim() || city,
+      country: (body.newVenue.country || country).toUpperCase(),
+    });
     if (!hit) {
       return NextResponse.json(
-        { error: "could not geocode address" },
+        {
+          error: `Could not find "${name}" or "${address}" on the map. Try simplifying the address or use just the city + country.`,
+        },
         { status: 422 },
+      );
+    }
+    if (hit.precision === "city") {
+      console.warn(
+        `venue "${name}" geocoded only to city precision — pin at city center`,
       );
     }
     // Widened in 0006-era: persist city/country/timezone on the venue
