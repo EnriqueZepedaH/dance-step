@@ -3322,6 +3322,28 @@ h2, h3, h4 { margin: 0; }
   color: var(--ink-mute);
 }
 
+.geocode-probe {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: -4px;
+}
+.geocode-probe-status {
+  font: 400 12px/1.3 inherit;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.geocode-probe-status--address {
+  color: #1f7a4d;
+}
+.geocode-probe-status--city {
+  color: #8a6a00;
+}
+.geocode-probe-status--error {
+  color: var(--terracotta-deep);
+}
+
 /* ============================================================
    Lab — research preview waitlist
    ============================================================ */

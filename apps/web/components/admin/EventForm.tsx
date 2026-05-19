@@ -71,6 +71,57 @@ export function EventForm({ mode, venues, initial }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Geocode probe state for the "new venue" flow. Lets the admin
+  // verify Mapbox can resolve the venue BEFORE submitting the form,
+  // so geocode misses can be debugged inline without burning the
+  // current state (or tempting a flyer re-extraction).
+  type GeocodeProbe =
+    | { status: "idle" }
+    | { status: "checking" }
+    | { status: "ok"; placeName: string; precision: "address" | "city" }
+    | { status: "error"; message: string };
+  const [probe, setProbe] = useState<GeocodeProbe>({ status: "idle" });
+
+  async function probeGeocode() {
+    setProbe({ status: "checking" });
+    try {
+      const res = await fetch("/api/admin/geocode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newVenueName.trim() || undefined,
+          address: newVenueAddress.trim() || undefined,
+          city: city.trim(),
+          country: country.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const payload = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        setProbe({
+          status: "error",
+          message: payload.error ?? `HTTP ${res.status}`,
+        });
+        return;
+      }
+      const hit = (await res.json()) as {
+        placeName: string;
+        precision: "address" | "city";
+      };
+      setProbe({
+        status: "ok",
+        placeName: hit.placeName,
+        precision: hit.precision,
+      });
+    } catch (e) {
+      setProbe({
+        status: "error",
+        message: e instanceof Error ? e.message : "probe failed",
+      });
+    }
+  }
+
   function applyExtraction(result: FlyerExtractionResult) {
     const ex = result.extracted;
     setExtractionId(result.extractionId);
@@ -362,11 +413,48 @@ export function EventForm({ mode, venues, initial }: Props) {
                 <input
                   type="text"
                   value={newVenueAddress}
-                  onChange={(e) => setNewVenueAddress(e.target.value)}
+                  onChange={(e) => {
+                    setNewVenueAddress(e.target.value);
+                    setProbe({ status: "idle" });
+                  }}
                   placeholder="123 N Main St, Chicago, IL"
                   required
                 />
               </label>
+
+              <div className="geocode-probe">
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={probeGeocode}
+                  disabled={
+                    probe.status === "checking" ||
+                    !newVenueName.trim() ||
+                    !city.trim() ||
+                    !country.trim()
+                  }
+                >
+                  {probe.status === "checking"
+                    ? "Checking…"
+                    : "Retry geocoding"}
+                </button>
+                {probe.status === "ok" ? (
+                  <span
+                    className={`geocode-probe-status geocode-probe-status--${probe.precision}`}
+                  >
+                    {probe.precision === "address" ? "✓" : "⚠"}{" "}
+                    {probe.precision === "address"
+                      ? "Resolved"
+                      : "City-only pin"}
+                    : {probe.placeName}
+                  </span>
+                ) : null}
+                {probe.status === "error" ? (
+                  <span className="geocode-probe-status geocode-probe-status--error">
+                    ✗ {probe.message}
+                  </span>
+                ) : null}
+              </div>
             </>
           ) : null}
         </fieldset>
