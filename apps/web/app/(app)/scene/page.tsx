@@ -2,11 +2,18 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { SceneShell, type SceneEvent } from "@/components/scene/SceneShell";
 import { env } from "@/lib/env";
 import { chicagoCurrentMonth, isValidMonthKey } from "@/lib/scene/dates";
+import { SCENE_CITIES, resolveSceneCity, type SceneCity } from "@/lib/scene/cities";
 
 // Server-fetches every published event in the future, plus the
 // joined venue. SceneShell does the filter + view switching on the
 // client. Window is the worker's 8-week materialization horizon —
 // past_date / out_of_window are quality-gated upstream.
+//
+// As of 2026-05 the Scene supports a small multi-city allowlist
+// (see lib/scene/cities). Default city is Chicago; ?city=
+// switches the row filter and the header. Date-grouping in
+// lib/scene/dates is still Chicago-anchored — events near local
+// midnight in other cities may bucket one day off. Tracked.
 
 const WINDOW_DAYS = 56;
 
@@ -34,11 +41,13 @@ type ScenePageProps = {
     view?: string;
     date?: string;
     month?: string;
+    city?: string;
   }>;
 };
 
 export default async function ScenePage({ searchParams }: ScenePageProps) {
   const sp = await searchParams;
+  const city: SceneCity = resolveSceneCity(sp.city);
   const initialMonth = isValidMonthKey(sp.month)
     ? sp.month
     : chicagoCurrentMonth();
@@ -56,6 +65,7 @@ export default async function ScenePage({ searchParams }: ScenePageProps) {
       "id, title, description, starts_at, ends_at, kind, source_url, timezone, venues(id, name, neighborhood, lat, lng, timezone)",
     )
     .eq("status", "published")
+    .eq("city", city)
     .gte("starts_at", nowIso)
     .lte("starts_at", horizonIso)
     .order("starts_at", { ascending: true });
@@ -91,7 +101,7 @@ export default async function ScenePage({ searchParams }: ScenePageProps) {
   return (
     <section className="scene-page">
       <header className="scene-header">
-        <span className="eyebrow bullet">The Scene · Chicago</span>
+        <span className="eyebrow bullet">The Scene · {city}</span>
         <h1 className="display">Where the floor is tonight.</h1>
         <p className="lede">
           {cleaned.length} upcoming socials, classes, and rueda nights — filter
@@ -104,6 +114,8 @@ export default async function ScenePage({ searchParams }: ScenePageProps) {
         events={cleaned}
         mapboxToken={env.NEXT_PUBLIC_MAPBOX_TOKEN}
         initialMonth={initialMonth}
+        city={city}
+        cities={[...SCENE_CITIES]}
       />
     </section>
   );

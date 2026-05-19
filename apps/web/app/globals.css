@@ -2526,6 +2526,20 @@ h2, h3, h4 { margin: 0; }
   padding: 3px;
   gap: 2px;
 }
+.scene-city-select select {
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bone);
+  font: 500 13px/1 inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+.scene-city-select select:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(210, 74, 28, 0.18);
+}
 .scene-view-nav button {
   padding: 8px 18px;
   font: 500 13px/1 inherit;

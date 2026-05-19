@@ -40,6 +40,8 @@ type Props = {
   events: SceneEvent[];
   mapboxToken: string | undefined;
   initialMonth: MonthKey;
+  city: string;
+  cities: string[];
 };
 
 const NEIGHBORHOOD_MIN = 3;
@@ -55,6 +57,8 @@ export function SceneShell({
   events,
   mapboxToken,
   initialMonth,
+  city,
+  cities,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -146,10 +150,39 @@ export function SceneShell({
     [pushQuery],
   );
 
+  const setCity = useCallback(
+    (next: string) => {
+      pushQuery((p) => {
+        if (next === cities[0]) p.delete("city");
+        else p.set("city", next);
+        // Switching cities invalidates view-specific keys.
+        p.delete("date");
+        p.delete("month");
+      });
+    },
+    [cities, pushQuery],
+  );
+
   return (
     <div className="scene-shell">
       <div className="scene-controls">
         <SceneViewNav view={view} onChange={setView} />
+        {cities.length > 1 ? (
+          <label className="scene-city-select">
+            <span className="sr-only">City</span>
+            <select
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              aria-label="Select city"
+            >
+              {cities.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <SceneFilters
           kind={kind}
           kinds={kinds}
