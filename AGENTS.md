@@ -75,7 +75,7 @@ Important proposal alignment: the original `PROJECT_PROPOSAL.md` Week 5 goal sti
 
 - Make focused commits by phase. Do not mix TypeScript migration, auth setup, schema, and feature work in one change.
 - Preserve the landing page visual output when extracting shared components.
-- Keep v1 scope disciplined. The ingest-worker MAY scrape public event sources (e.g. WordPress event pages) when no structured surface exists, per the Scene ingestion plan; *otherwise* do not add scrapers, comments, profiles, shared playlists, PWA/mobile, video upload, Supabase Storage, or analyzer backend work.
+- Keep v1 scope disciplined. The ingest-worker MAY scrape public event sources (e.g. WordPress event pages) when no structured surface exists, per the Scene ingestion plan. **Supabase Storage was adopted 2026-05-19** — the admin flyer-extraction flow is the first consumer (private `event-flyers` bucket, signed URLs only; see the Flyer Extraction Runbook below). *Otherwise* do not add scrapers, comments, profiles, shared playlists, PWA/mobile, video upload, or analyzer backend work.
 - Do not put DB queries in `proxy.ts`. Use it only for Clerk route gating.
 - Use explicit server-side admin checks in `app/admin/layout.tsx` and admin API handlers.
 - Keep service-role Supabase usage isolated in `lib/supabase/admin.ts` and narrow helpers only. Never import service-role code into client components.
@@ -121,6 +121,66 @@ select * from ingest_runs order by started_at desc limit 10;
 ```
 
 If you see `failed` rows or zero `promoted_count` from a `success` row, something's off.
+
+## Flyer Extraction Runbook
+
+Admin-only flyer-to-event accelerator on `/admin/events/new`. An admin uploads a Latin dance flyer image; Claude Vision extracts event fields; the admin reviews/edits the prefilled form and submits through the existing `/api/admin/events` POST. Every extraction is audited in `flyer_extractions` with full observability (latency, tokens, raw response, edited fields, finalized payload).
+
+**Architecture sketch**
+
+```
+/admin/events/new
+  FlyerDropzone ─► EventForm (prefilled, editable)
+       │                       │
+       │ POST /api/admin/      │ POST /api/admin/events
+       │   flyers/extract      │ { ...event, flyerExtractionId,
+       │                       │   fieldsEdited[], city, country, timezone }
+       ▼                       ▼
+  upload → vision call    lookup flyer_extractions (admin client),
+  audit row updated        insert event w/ flyer_extraction_id,
+  status: processing →     finalize fields_edited + finalized_payload
+   completed | failed
+```
+
+- Storage bucket: `event-flyers` (private, no select policy, service-role only).
+- Audit row inserts BEFORE bytes hit Storage so crashes never leave orphan flyers without a trail.
+- `flyer_storage_path` on `events` is loaded from the DB on the server side — clients cannot tamper with which image gets stamped.
+- Service-role isolation: `getSupabaseAdminClient()` is the only path to `flyer_extractions` and Storage; event/venue writes stay on the RLS-bound `createSupabaseServerClient()`.
+
+**Operator runbook**
+
+- **Re-extract a flyer.** Upload via the dropzone, then click "Re-extract" to re-POST the same file. Both extractions live in `flyer_extractions`; finalization links the successful one to the event.
+- **Audit failed extractions.**
+  ```sql
+  select id, error, latency_ms, created_at
+  from flyer_extractions
+  where status='failed'
+  order by created_at desc;
+  ```
+- **Audit slow extractions.**
+  ```sql
+  select id, model, latency_ms
+  from flyer_extractions
+  where status='completed'
+  order by latency_ms desc limit 20;
+  ```
+- **Token cost survey.**
+  ```sql
+  select date(created_at), sum(total_tokens)
+  from flyer_extractions
+  group by 1 order by 1 desc;
+  ```
+- **Edit-rate by field** (training signal for future prompt tuning).
+  ```sql
+  select field, count(*) as edit_count
+  from flyer_extractions, unnest(fields_edited) as field
+  group by field order by edit_count desc;
+  ```
+- **Adjust daily cap.** Set `FLYER_EXTRACT_DAILY_CAP` in Vercel (default 100). Cap is enforced UTC-day, globally — not per admin.
+- **Inspect a flyer manually.** Supabase Studio → Storage → `event-flyers` → drill by `storage_path` from the row.
+- **Configuration check.** Route returns 503 when `ANTHROPIC_API_KEY` is absent; dev builds without the key still compile and serve everything else.
+
+**Multi-city note.** The Scene page filters by `events.city` against an allowlist in `apps/web/lib/scene/cities.ts`. Adding a city = append to the list; no schema change. Calendar/list date keys are still Chicago-anchored — non-Chicago events near local midnight may bucket one day off until that helper is refactored.
 
 ## End-to-End Verification
 
