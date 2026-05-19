@@ -110,6 +110,7 @@ export type Database = {
           description: string | null
           ends_at: string | null
           flyer_extraction_id: string | null
+          flyer_public: boolean
           flyer_storage_path: string | null
           id: string
           kind: string | null
@@ -135,6 +136,7 @@ export type Database = {
           description?: string | null
           ends_at?: string | null
           flyer_extraction_id?: string | null
+          flyer_public?: boolean
           flyer_storage_path?: string | null
           id?: string
           kind?: string | null
@@ -160,6 +162,7 @@ export type Database = {
           description?: string | null
           ends_at?: string | null
           flyer_extraction_id?: string | null
+          flyer_public?: boolean
           flyer_storage_path?: string | null
           id?: string
           kind?: string | null
