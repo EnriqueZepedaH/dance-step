@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { FlyerDropzone, type FlyerExtractionResult } from "./FlyerDropzone";
+import { FlyerFieldBadge } from "./FlyerFieldBadge";
+import { computeFieldsEdited } from "@/lib/admin/fieldsEdited";
+import type { ExtractedEvent } from "@/lib/llm/extractedSchema";
+
 export type VenueOption = {
   id: string;
   name: string;
@@ -12,7 +17,7 @@ export type VenueOption = {
 export type EventFormInitial = {
   id: string;
   title: string;
-  startsAtLocal: string;        // "YYYY-MM-DDTHH:mm" in Chicago wall time
+  startsAtLocal: string;
   endsAtLocal: string | null;
   kind: string | null;
   description: string | null;
@@ -27,6 +32,9 @@ type Props = {
 };
 
 const KIND_OPTIONS = ["social", "class", "practica", "festival", "other"];
+const DEFAULT_TZ = "America/Chicago";
+const DEFAULT_COUNTRY = "US";
+const DEFAULT_CITY = "Chicago";
 
 export function EventForm({ mode, venues, initial }: Props) {
   const router = useRouter();
@@ -45,8 +53,81 @@ export function EventForm({ mode, venues, initial }: Props) {
   const [newVenueName, setNewVenueName] = useState("");
   const [newVenueAddress, setNewVenueAddress] = useState("");
 
+  // Flyer-extraction state. `original` is the untouched ExtractedEvent
+  // we got back from /api/admin/flyers/extract — kept separate from
+  // the editable form state so the fields-edited diff at submit time
+  // is reliable. `extractionId` is the foreign key we ship back to
+  // /api/admin/events on POST.
+  const [extractionId, setExtractionId] = useState<string | null>(null);
+  const [original, setOriginal] = useState<ExtractedEvent | null>(null);
+
+  // Per-event location overrides. Default to Chicago/US/America/Chicago
+  // so the current admin flow keeps working byte-for-byte; flyer
+  // extraction can overwrite these on prefill.
+  const [city, setCity] = useState(DEFAULT_CITY);
+  const [country, setCountry] = useState(DEFAULT_COUNTRY);
+  const [timezone, setTimezone] = useState(DEFAULT_TZ);
+
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function applyExtraction(result: FlyerExtractionResult) {
+    const ex = result.extracted;
+    setExtractionId(result.extractionId);
+    setOriginal(ex);
+
+    if (ex.title) setTitle(ex.title);
+    if (ex.description) setDescription(ex.description);
+    if (ex.startsLocal) setStartsAt(ex.startsLocal);
+    if (ex.endsLocal) setEndsAt(ex.endsLocal);
+    if (ex.kind) setKind(ex.kind);
+    if (ex.sourceUrl) setUrl(ex.sourceUrl);
+    if (ex.timezone) setTimezone(ex.timezone);
+    if (ex.city) setCity(ex.city);
+    if (ex.country) setCountry(ex.country);
+
+    if (ex.venueName || ex.venueAddress) {
+      setUseNewVenue(true);
+      if (ex.venueName) setNewVenueName(ex.venueName);
+      if (ex.venueAddress) setNewVenueAddress(ex.venueAddress);
+    }
+  }
+
+  function clearExtraction() {
+    setExtractionId(null);
+    setOriginal(null);
+  }
+
+  function snapshot() {
+    return {
+      title,
+      description: description || null,
+      startsLocal: startsAt || null,
+      endsLocal: endsAt || null,
+      venueName: useNewVenue ? newVenueName : null,
+      venueAddress: useNewVenue ? newVenueAddress : null,
+      city,
+      country,
+      timezone,
+      kind: kind || null,
+      sourceUrl: url || null,
+    };
+  }
+
+  function badgeFor(field: string) {
+    if (!original) return null;
+    const edited =
+      computeFieldsEdited(original, snapshot()).includes(
+        field as keyof ReturnType<typeof snapshot>,
+      );
+    return (
+      <FlyerFieldBadge
+        field={field}
+        confidence={original.confidence}
+        edited={edited}
+      />
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -65,6 +146,9 @@ export function EventForm({ mode, venues, initial }: Props) {
 
       let res: Response;
       if (mode === "create") {
+        const fieldsEdited = original
+          ? computeFieldsEdited(original, snapshot())
+          : [];
         res = await fetch("/api/admin/events", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -75,9 +159,17 @@ export function EventForm({ mode, venues, initial }: Props) {
                   newVenue: {
                     name: newVenueName.trim(),
                     address: newVenueAddress.trim(),
+                    city: city || undefined,
+                    country: country || undefined,
+                    timezone: timezone || undefined,
                   },
                 }
               : { venueId }),
+            city,
+            country,
+            timezone,
+            flyerExtractionId: extractionId ?? undefined,
+            fieldsEdited: extractionId ? fieldsEdited : undefined,
           }),
         });
       } else {
@@ -110,8 +202,17 @@ export function EventForm({ mode, venues, initial }: Props) {
 
   return (
     <form className="admin-form" onSubmit={handleSubmit}>
+      {mode === "create" ? (
+        <FlyerDropzone
+          onExtracted={applyExtraction}
+          onCleared={clearExtraction}
+        />
+      ) : null}
+
       <label>
-        Title
+        <span className="admin-form-label">
+          Title {badgeFor("title")}
+        </span>
         <input
           type="text"
           value={title}
@@ -123,7 +224,9 @@ export function EventForm({ mode, venues, initial }: Props) {
 
       <div className="form-row">
         <label>
-          Starts (Chicago)
+          <span className="admin-form-label">
+            Starts (local) {badgeFor("startsLocal")}
+          </span>
           <input
             type="datetime-local"
             value={startsAt}
@@ -132,7 +235,9 @@ export function EventForm({ mode, venues, initial }: Props) {
           />
         </label>
         <label>
-          Ends (Chicago)
+          <span className="admin-form-label">
+            Ends (local) {badgeFor("endsLocal")}
+          </span>
           <input
             type="datetime-local"
             value={endsAt}
@@ -141,8 +246,50 @@ export function EventForm({ mode, venues, initial }: Props) {
         </label>
       </div>
 
+      {mode === "create" ? (
+        <div className="form-row">
+          <label>
+            <span className="admin-form-label">
+              City {badgeFor("city")}
+            </span>
+            <input
+              type="text"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              required
+            />
+          </label>
+          <label>
+            <span className="admin-form-label">
+              Country {badgeFor("country")}
+            </span>
+            <input
+              type="text"
+              value={country}
+              onChange={(e) => setCountry(e.target.value.toUpperCase())}
+              maxLength={2}
+              required
+            />
+          </label>
+          <label>
+            <span className="admin-form-label">
+              Timezone {badgeFor("timezone")}
+            </span>
+            <input
+              type="text"
+              value={timezone}
+              onChange={(e) => setTimezone(e.target.value)}
+              placeholder="America/Chicago"
+              required
+            />
+          </label>
+        </div>
+      ) : null}
+
       <label>
-        Kind
+        <span className="admin-form-label">
+          Kind {badgeFor("kind")}
+        </span>
         <select value={kind} onChange={(e) => setKind(e.target.value)}>
           {KIND_OPTIONS.map((k) => (
             <option key={k} value={k}>
@@ -193,7 +340,9 @@ export function EventForm({ mode, venues, initial }: Props) {
           {useNewVenue ? (
             <>
               <label>
-                Name
+                <span className="admin-form-label">
+                  Name {badgeFor("venueName")}
+                </span>
                 <input
                   type="text"
                   value={newVenueName}
@@ -202,7 +351,9 @@ export function EventForm({ mode, venues, initial }: Props) {
                 />
               </label>
               <label>
-                Address
+                <span className="admin-form-label">
+                  Address {badgeFor("venueAddress")}
+                </span>
                 <input
                   type="text"
                   value={newVenueAddress}
@@ -229,7 +380,9 @@ export function EventForm({ mode, venues, initial }: Props) {
       )}
 
       <label>
-        Description
+        <span className="admin-form-label">
+          Description {badgeFor("description")}
+        </span>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -238,7 +391,9 @@ export function EventForm({ mode, venues, initial }: Props) {
       </label>
 
       <label>
-        URL
+        <span className="admin-form-label">
+          URL {badgeFor("sourceUrl")}
+        </span>
         <input
           type="url"
           value={url}
@@ -254,8 +409,8 @@ export function EventForm({ mode, venues, initial }: Props) {
           {busy
             ? "Saving…"
             : mode === "create"
-            ? "Create event"
-            : "Save changes"}
+              ? "Create event"
+              : "Save changes"}
         </button>
         <button
           type="button"
