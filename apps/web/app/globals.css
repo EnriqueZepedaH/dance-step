@@ -2374,6 +2374,67 @@ h2, h3, h4 { margin: 0; }
   gap: 12px;
 }
 
+.admin-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin: 28px 0 8px;
+}
+.admin-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 18px 20px;
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.admin-card header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-card header svg {
+  color: var(--terracotta);
+  flex-shrink: 0;
+}
+.admin-card header h2 {
+  margin: 0;
+  font: 600 16px/1.2 inherit;
+  flex: 1;
+}
+.admin-card-count {
+  font: 600 18px/1 inherit;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.admin-card-count small {
+  font: 400 11px/1 inherit;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-left: 4px;
+}
+.admin-card p {
+  margin: 0;
+  font: 400 13px/1.5 inherit;
+  color: var(--ink-mute);
+  flex: 1;
+}
+.admin-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.admin-card-actions .btn {
+  padding: 8px 14px;
+  font: 500 13px/1 inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .admin-table-wrap {
   overflow-x: auto;
   border: 1px solid var(--line);
