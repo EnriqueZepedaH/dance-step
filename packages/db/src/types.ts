@@ -104,10 +104,13 @@ export type Database = {
         Row: {
           city: string
           content_hash: string | null
+          country: string
           created_at: string
           created_by: string | null
           description: string | null
           ends_at: string | null
+          flyer_extraction_id: string | null
+          flyer_storage_path: string | null
           id: string
           kind: string | null
           last_seen_at: string | null
@@ -126,10 +129,13 @@ export type Database = {
         Insert: {
           city?: string
           content_hash?: string | null
+          country?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
           ends_at?: string | null
+          flyer_extraction_id?: string | null
+          flyer_storage_path?: string | null
           id?: string
           kind?: string | null
           last_seen_at?: string | null
@@ -148,10 +154,13 @@ export type Database = {
         Update: {
           city?: string
           content_hash?: string | null
+          country?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
           ends_at?: string | null
+          flyer_extraction_id?: string | null
+          flyer_storage_path?: string | null
           id?: string
           kind?: string | null
           last_seen_at?: string | null
@@ -176,10 +185,101 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "events_flyer_extraction_id_fkey"
+            columns: ["flyer_extraction_id"]
+            isOneToOne: false
+            referencedRelation: "flyer_extractions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "events_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flyer_extractions: {
+        Row: {
+          bytes: number
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          error: string | null
+          extracted: Json | null
+          fields_edited: string[]
+          finalized_event_id: string | null
+          finalized_payload: Json | null
+          id: string
+          input_tokens: number
+          latency_ms: number | null
+          mime: string
+          model: string
+          output_tokens: number
+          raw_response: Json | null
+          status: string
+          storage_path: string
+          total_tokens: number
+          warnings: Json
+        }
+        Insert: {
+          bytes: number
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          error?: string | null
+          extracted?: Json | null
+          fields_edited?: string[]
+          finalized_event_id?: string | null
+          finalized_payload?: Json | null
+          id?: string
+          input_tokens?: number
+          latency_ms?: number | null
+          mime: string
+          model: string
+          output_tokens?: number
+          raw_response?: Json | null
+          status: string
+          storage_path: string
+          total_tokens?: number
+          warnings?: Json
+        }
+        Update: {
+          bytes?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          error?: string | null
+          extracted?: Json | null
+          fields_edited?: string[]
+          finalized_event_id?: string | null
+          finalized_payload?: Json | null
+          id?: string
+          input_tokens?: number
+          latency_ms?: number | null
+          mime?: string
+          model?: string
+          output_tokens?: number
+          raw_response?: Json | null
+          status?: string
+          storage_path?: string
+          total_tokens?: number
+          warnings?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flyer_extractions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flyer_extractions_finalized_event_id_fkey"
+            columns: ["finalized_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]
