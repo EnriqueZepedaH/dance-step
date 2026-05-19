@@ -17,6 +17,12 @@ const serverSchema = z.object({
   // Optional today, but required once Phase 3/4 land. Mark .optional() so
   // the build does not break before the keys are provisioned.
   YOUTUBE_API_KEY: z.string().min(1).optional(),
+  // Flyer extraction (Phase 6 onwards). Optional so dev environments
+  // without the key still build; the extract route returns 503 when
+  // absent.
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
+  FLYER_EXTRACT_MODEL: z.string().min(1).default("claude-sonnet-4-6"),
+  FLYER_EXTRACT_DAILY_CAP: z.coerce.number().int().positive().default(100),
 });
 
 const clientSchema = z.object({
@@ -63,6 +69,9 @@ const serverParsed = isServer
       CLERK_WEBHOOK_SECRET: process.env.CLERK_WEBHOOK_SECRET,
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
       YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY,
+      ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+      FLYER_EXTRACT_MODEL: process.env.FLYER_EXTRACT_MODEL,
+      FLYER_EXTRACT_DAILY_CAP: process.env.FLYER_EXTRACT_DAILY_CAP,
     })
   : ({ success: true, data: {} as z.infer<typeof serverSchema> } as const);
 

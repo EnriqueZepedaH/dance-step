@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.96.0",
     "@clerk/nextjs": "^7.3.0",
     "@dancestep/db": "*",
     "@supabase/supabase-js": "^2.105.3",
