@@ -1,13 +1,25 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin/requireAdmin";
 import { geocodeAddress } from "@/lib/mapbox/geocode";
+import { isValidIanaTimezone, localToUtcIso } from "@/lib/time/local";
 import type { TablesUpdate } from "@/lib/db/types";
 
 // Admin events CRUD. Auth is gated by proxy.ts; admin role is
 // re-checked here for defense in depth (the layout's check is the
 // primary gate, but a direct API hit must not bypass it). RLS on
 // events/venues also enforces admin role at the DB layer.
+//
+// As of migration 0006 this route also accepts flyer-extraction
+// fields: flyerExtractionId references a completed flyer_extractions
+// row; fieldsEdited captures which admin-edited fields diverged from
+// the raw model output. Both feed the observability columns the
+// admin form sets up in Phase 7.
+
+const DEFAULT_TZ = "America/Chicago";
+const DEFAULT_COUNTRY = "US";
+const DEFAULT_CITY = "Chicago";
 
 type CreateBody = {
   title?: string;
@@ -17,7 +29,18 @@ type CreateBody = {
   description?: string | null;
   url?: string | null;
   venueId?: string | null;
-  newVenue?: { name: string; address: string } | null;
+  newVenue?: {
+    name: string;
+    address: string;
+    city?: string;
+    country?: string;
+    timezone?: string;
+  } | null;
+  city?: string;
+  country?: string;
+  timezone?: string;
+  flyerExtractionId?: string;
+  fieldsEdited?: string[];
 };
 
 type PatchBody = {
@@ -31,42 +54,6 @@ type PatchBody = {
   venueId?: string | null;
 };
 
-// Converts a naive Chicago wall-clock string ("2026-05-06T21:00") to
-// an ISO UTC string. Single-pass: the offset is sampled at the input
-// instant treated as UTC, which is fine outside DST transitions but
-// can be one hour off if the input falls in the "missing" hour on
-// the spring-forward boundary. Acceptable for admin-curated events.
-function chicagoLocalToUtcIso(local: string): string {
-  const sample = new Date(local + "Z");
-  const fmt = (tz: string) =>
-    new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-      timeZone: tz,
-    }).formatToParts(sample);
-
-  const part = (parts: Intl.DateTimeFormatPart[], type: string) =>
-    parts.find((p) => p.type === type)?.value ?? "00";
-
-  const epoch = (parts: Intl.DateTimeFormatPart[]) =>
-    Date.UTC(
-      Number(part(parts, "year")),
-      Number(part(parts, "month")) - 1,
-      Number(part(parts, "day")),
-      Number(part(parts, "hour")) % 24,
-      Number(part(parts, "minute")),
-      Number(part(parts, "second")),
-    );
-
-  const offsetMs = epoch(fmt("UTC")) - epoch(fmt("America/Chicago"));
-  return new Date(sample.getTime() + offsetMs).toISOString();
-}
-
 export async function POST(req: Request) {
   const guard = await requireAdmin();
   if ("error" in guard) return guard.error;
@@ -77,6 +64,55 @@ export async function POST(req: Request) {
       { error: "title and startsAt are required" },
       { status: 400 },
     );
+  }
+
+  const city = body.city?.trim() || DEFAULT_CITY;
+  const country = body.country?.trim().toUpperCase() || DEFAULT_COUNTRY;
+  const timezone = body.timezone?.trim() || DEFAULT_TZ;
+  if (!isValidIanaTimezone(timezone)) {
+    return NextResponse.json(
+      { error: `invalid timezone: ${timezone}` },
+      { status: 400 },
+    );
+  }
+  if (country.length !== 2) {
+    return NextResponse.json(
+      { error: "country must be ISO 3166-1 alpha-2" },
+      { status: 400 },
+    );
+  }
+
+  // Resolve flyer extraction (if any) via the service-role client —
+  // flyer_extractions is RLS-policy-less, service-role only. The
+  // storage_path comes from the DB, never the client.
+  let flyerStoragePath: string | null = null;
+  if (body.flyerExtractionId) {
+    const admin = getSupabaseAdminClient();
+    const { data: extraction, error: lookupErr } = await admin
+      .from("flyer_extractions")
+      .select("status, storage_path")
+      .eq("id", body.flyerExtractionId)
+      .maybeSingle();
+    if (lookupErr) {
+      console.error("flyer_extractions lookup failed", lookupErr);
+      return NextResponse.json(
+        { error: "flyer lookup failed" },
+        { status: 500 },
+      );
+    }
+    if (!extraction) {
+      return NextResponse.json(
+        { error: "flyerExtractionId not found" },
+        { status: 400 },
+      );
+    }
+    if (extraction.status !== "completed") {
+      return NextResponse.json(
+        { error: `flyer extraction is ${extraction.status}, not completed` },
+        { status: 400 },
+      );
+    }
+    flyerStoragePath = extraction.storage_path;
   }
 
   const supabase = await createSupabaseServerClient();
@@ -98,14 +134,31 @@ export async function POST(req: Request) {
         { status: 422 },
       );
     }
+    // Widened in 0006-era: persist city/country/timezone on the venue
+    // when supplied, otherwise let column defaults (Chicago/US/...) win.
+    const venueInsert: {
+      name: string;
+      address: string;
+      lat: number;
+      lng: number;
+      city?: string;
+      country?: string;
+      timezone?: string;
+    } = {
+      name,
+      address,
+      lat: hit.lat,
+      lng: hit.lng,
+    };
+    if (body.newVenue.city) venueInsert.city = body.newVenue.city;
+    if (body.newVenue.country) {
+      venueInsert.country = body.newVenue.country.toUpperCase();
+    }
+    if (body.newVenue.timezone) venueInsert.timezone = body.newVenue.timezone;
+
     const { data: venue, error: venueError } = await supabase
       .from("venues")
-      .insert({
-        name,
-        address,
-        lat: hit.lat,
-        lng: hit.lng,
-      })
+      .insert(venueInsert)
       .select()
       .single();
     if (venueError) {
@@ -122,8 +175,8 @@ export async function POST(req: Request) {
     );
   }
 
-  const startsAtIso = chicagoLocalToUtcIso(body.startsAt);
-  const endsAtIso = body.endsAt ? chicagoLocalToUtcIso(body.endsAt) : null;
+  const startsAtIso = localToUtcIso(body.startsAt, timezone);
+  const endsAtIso = body.endsAt ? localToUtcIso(body.endsAt, timezone) : null;
 
   const { data, error } = await supabase
     .from("events")
@@ -136,6 +189,11 @@ export async function POST(req: Request) {
       description: body.description ?? null,
       url: body.url ?? null,
       created_by: guard.userId,
+      city,
+      country,
+      timezone,
+      flyer_storage_path: flyerStoragePath,
+      flyer_extraction_id: body.flyerExtractionId ?? null,
     })
     .select()
     .single();
@@ -144,6 +202,40 @@ export async function POST(req: Request) {
     console.error("event insert failed", error);
     return NextResponse.json({ error: "create failed" }, { status: 500 });
   }
+
+  // Best-effort observability finalization. We don't want a botched
+  // audit update to 500 the already-created event — log and move on.
+  if (body.flyerExtractionId) {
+    const admin = getSupabaseAdminClient();
+    const finalizedPayload = {
+      id: data.id,
+      title: body.title,
+      startsAt: startsAtIso,
+      endsAt: endsAtIso,
+      kind: body.kind ?? null,
+      description: body.description ?? null,
+      url: body.url ?? null,
+      city,
+      country,
+      timezone,
+      venueId,
+    };
+    const { error: finalizeErr } = await admin
+      .from("flyer_extractions")
+      .update({
+        finalized_event_id: data.id,
+        fields_edited: body.fieldsEdited ?? [],
+        finalized_payload: finalizedPayload,
+      })
+      .eq("id", body.flyerExtractionId);
+    if (finalizeErr) {
+      console.error(
+        "flyer_extractions finalize failed (event created OK)",
+        finalizeErr,
+      );
+    }
+  }
+
   return NextResponse.json({ event: data });
 }
 
@@ -156,12 +248,35 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "id required" }, { status: 400 });
   }
 
+  const supabase = await createSupabaseServerClient();
+
+  // Fetch the event's existing timezone so we can interpret incoming
+  // datetime-local strings correctly even when the PATCH body doesn't
+  // include a tz field (which is the common admin-edit path today).
+  let eventTimezone = DEFAULT_TZ;
+  if (typeof body.startsAt === "string" || body.endsAt !== undefined) {
+    const { data: existing, error: lookupErr } = await supabase
+      .from("events")
+      .select("timezone")
+      .eq("id", body.id)
+      .maybeSingle();
+    if (lookupErr) {
+      console.error("event lookup failed", lookupErr);
+      return NextResponse.json({ error: "lookup failed" }, { status: 500 });
+    }
+    if (existing?.timezone) eventTimezone = existing.timezone;
+  }
+
   const update: TablesUpdate<"events"> = {};
   if (typeof body.title === "string") update.title = body.title;
-  if (typeof body.startsAt === "string")
-    update.starts_at = chicagoLocalToUtcIso(body.startsAt);
-  if (body.endsAt !== undefined)
-    update.ends_at = body.endsAt ? chicagoLocalToUtcIso(body.endsAt) : null;
+  if (typeof body.startsAt === "string") {
+    update.starts_at = localToUtcIso(body.startsAt, eventTimezone);
+  }
+  if (body.endsAt !== undefined) {
+    update.ends_at = body.endsAt
+      ? localToUtcIso(body.endsAt, eventTimezone)
+      : null;
+  }
   if (body.kind !== undefined) update.kind = body.kind;
   if (body.description !== undefined) update.description = body.description;
   if (body.url !== undefined) update.url = body.url;
@@ -171,7 +286,6 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "no fields to update" }, { status: 400 });
   }
 
-  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("events")
     .update(update)
