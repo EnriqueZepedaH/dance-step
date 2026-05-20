@@ -2661,13 +2661,20 @@ h2, h3, h4 { margin: 0; }
 .scene-filter select {
   appearance: none;
   -webkit-appearance: none;
-  font: 500 13px/1.2 inherit;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
   letter-spacing: 0.01em;
+  min-width: 7em;
   padding: 6px 22px 6px 0;
   border: none;
   border-radius: 0;
-  background: transparent;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%231a120b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1.5l5 5 5-5'/></svg>");
+  /* Solid background (not transparent) so Safari/Firefox don't hide
+     the selected option's text. Matches the page (--bone) so it
+     still reads as borderless instead of a highlighted chip. */
+  background-color: var(--bone);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%236c5544' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1.5l5 5 5-5'/></svg>");
   background-repeat: no-repeat;
   background-position: right 2px center;
   background-size: 10px 8px;
@@ -2678,6 +2685,12 @@ h2, h3, h4 { margin: 0; }
 .scene-filter select:focus-visible {
   color: var(--terracotta-deep);
   outline: none;
+}
+/* Native option panel inherits transparent backgrounds on some
+   browsers, making options invisible. Force a readable surface. */
+.scene-filter select option {
+  background: var(--bone);
+  color: var(--ink);
 }
 .scene-count {
   margin-left: auto;
