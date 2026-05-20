@@ -149,7 +149,6 @@ export default function Home() {
             {/* Front: Library */}
             <div className="collage-card collage-lib">
               <div className="thumb">
-                <span className="tri" />
                 <span className="duration">4:12</span>
               </div>
               <div className="meta">

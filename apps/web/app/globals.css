@@ -506,21 +506,6 @@ h2, h3, h4 { margin: 0; }
     linear-gradient(135deg, #2c1408, #5a1f08 45%, #c4571a 100%);
   display: grid; place-items: center;
 }
-.collage-lib .thumb .tri {
-  width: 44px; height: 44px;
-  background: var(--cream);
-  border-radius: 50%;
-  display: grid; place-items: center;
-  color: var(--ink);
-}
-.collage-lib .thumb .tri::after {
-  content: "";
-  width: 0; height: 0;
-  border-left: 14px solid var(--ink);
-  border-top: 9px solid transparent;
-  border-bottom: 9px solid transparent;
-  margin-left: 4px;
-}
 .collage-lib .thumb .duration {
   position: absolute; right: 8px; bottom: 8px;
   background: rgba(26, 18, 11, 0.7);
