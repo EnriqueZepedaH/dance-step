@@ -2610,14 +2610,15 @@ h2, h3, h4 { margin: 0; }
   flex-wrap: wrap;
 }
 .scene-filter-toggle {
-  padding: 8px 12px;
+  padding: 6px 2px;
   font: 500 13px/1 inherit;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: var(--bone);
+  letter-spacing: 0.02em;
+  border: none;
+  background: transparent;
   cursor: pointer;
   color: var(--ink);
 }
+.scene-filter-toggle:hover { color: var(--terracotta-deep); }
 .scene-filters {
   display: flex;
   gap: 16px;
@@ -2637,20 +2638,46 @@ h2, h3, h4 { margin: 0; }
   .scene-filters.is-open { display: flex; }
 }
 .scene-filter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font: 500 12px/1 inherit;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-mute);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+  position: relative;
+  color: var(--ink-soft);
+}
+/* The "Kind" / "Neighborhood" labels are redundant once the select's
+   selected option carries the same meaning ("All kinds"). Keep them
+   in the DOM for screen readers; visually hide. */
+.scene-filter > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 .scene-filter select {
-  font: 400 13px/1.3 inherit;
-  padding: 6px 10px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: white;
+  appearance: none;
+  -webkit-appearance: none;
+  font: 500 13px/1.2 inherit;
+  letter-spacing: 0.01em;
+  padding: 6px 22px 6px 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%231a120b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1.5l5 5 5-5'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 2px center;
+  background-size: 10px 8px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.scene-filter select:hover,
+.scene-filter select:focus-visible {
+  color: var(--terracotta-deep);
+  outline: none;
 }
 .scene-count {
   margin-left: auto;
@@ -2664,9 +2691,9 @@ h2, h3, h4 { margin: 0; }
 }
 .scene-rail {
   display: flex;
-  gap: 8px;
+  gap: 2px;
   overflow-x: auto;
-  padding: 4px 2px 10px;
+  padding: 4px 2px 12px;
   scrollbar-width: thin;
 }
 .scene-rail::-webkit-scrollbar { height: 6px; }
@@ -2676,47 +2703,51 @@ h2, h3, h4 { margin: 0; }
 }
 .scene-chip {
   flex: 0 0 auto;
-  min-width: 64px;
+  min-width: 60px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 10px 12px;
+  gap: 3px;
+  padding: 10px 12px 11px;
   font: 500 12px/1 inherit;
-  background: var(--cream);
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
   cursor: pointer;
-  color: var(--ink);
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  color: var(--ink-mute);
+  transition: color 120ms ease, border-color 120ms ease;
 }
 .scene-chip:hover {
-  border-color: var(--terracotta);
   color: var(--terracotta-deep);
+  border-bottom-color: rgba(210, 74, 28, 0.25);
 }
 .scene-chip.is-active {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--cream);
+  background: rgba(210, 74, 28, 0.08);
+  color: var(--ink);
+  border-bottom-color: var(--terracotta);
 }
+.scene-chip.is-active .scene-chip-day { color: var(--terracotta-deep); }
 .scene-chip.is-today:not(.is-active) {
-  border-color: var(--terracotta);
+  color: var(--ink);
+  border-bottom-color: rgba(210, 74, 28, 0.3);
 }
 .scene-chip-dow {
   font: 500 11px/1 inherit;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: inherit;
-  opacity: 0.85;
+  opacity: 0.75;
 }
 .scene-chip-day {
-  font: 600 18px/1 inherit;
+  font: 600 19px/1 var(--font-display), "Fraunces", "Times New Roman", serif;
+  color: inherit;
 }
 .scene-chip-month {
   font: 400 10px/1 inherit;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 .scene-list-groups {
   display: flex;
@@ -2990,53 +3021,55 @@ h2, h3, h4 { margin: 0; }
 .event-card {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(26, 18, 11, 0.14);
+  border: 1px solid rgba(26, 18, 11, 0.1);
   border-left: 4px solid var(--terracotta);
   border-radius: 8px;
   background: var(--cream);
-  padding: 18px;
+  padding: 26px 26px 22px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  box-shadow: 0 1px 0 rgba(26, 18, 11, 0.06), 0 24px 48px -40px rgba(26, 18, 11, 0.45);
+  gap: 18px;
+  box-shadow: 0 1px 0 rgba(26, 18, 11, 0.04), 0 24px 48px -40px rgba(26, 18, 11, 0.4);
   transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
 }
 .event-card:hover {
-  border-color: rgba(210, 74, 28, 0.38);
-  box-shadow: 0 2px 0 rgba(26, 18, 11, 0.08), 0 30px 56px -42px rgba(26, 18, 11, 0.5);
+  border-color: rgba(210, 74, 28, 0.32);
+  box-shadow: 0 2px 0 rgba(26, 18, 11, 0.06), 0 30px 56px -42px rgba(26, 18, 11, 0.45);
   transform: translateY(-1px);
 }
 .event-card-top {
   display: grid;
-  grid-template-columns: 54px 1fr;
-  gap: 14px;
+  grid-template-columns: auto 1fr;
+  gap: 22px;
   align-items: start;
 }
+/* Date badge: borderless, typography-led, breathes from the title. */
 .event-card-date {
   display: flex;
-  min-height: 62px;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--bone);
+  align-items: flex-start;
+  justify-content: flex-start;
+  border: none;
+  background: transparent;
   color: var(--ink);
+  padding-top: 2px;
+  min-width: 44px;
 }
 .event-card-date span {
-  font: 600 10px/1 inherit;
-  letter-spacing: 0.1em;
+  font: 600 10px/1.1 inherit;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--terracotta-deep);
 }
 .event-card-date strong {
-  font: 600 24px/1 var(--font-display), "Fraunces", "Times New Roman", serif;
+  font: 600 30px/1 var(--font-display), "Fraunces", "Times New Roman", serif;
+  margin-top: 4px;
 }
 .event-card-main {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 10px;
 }
 .event-card-head {
   display: flex;
@@ -3050,6 +3083,13 @@ h2, h3, h4 { margin: 0; }
   gap: 6px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+/* Soft terracotta tint instead of the shared bone/gray pill — feels
+   like an editorial tag rather than a status badge. */
+.event-card-pills .pill {
+  background: rgba(210, 74, 28, 0.08);
+  color: var(--terracotta-deep);
+  border-color: rgba(210, 74, 28, 0.18);
 }
 .event-card-title {
   font: 600 18px/1.22 inherit;
@@ -3073,14 +3113,16 @@ h2, h3, h4 { margin: 0; }
   flex: 0 0 auto;
   color: var(--terracotta-deep);
 }
+/* Borderless body — let the typography (and the card's own padding)
+   carry the description, rather than nesting another beige box
+   inside the cream card. */
 .event-card-body {
-  font: 400 14px/1.55 inherit;
+  font: 400 14.5px/1.6 inherit;
   color: var(--ink-soft);
   margin: 0;
-  padding: 12px 14px;
-  background: rgba(239, 228, 207, 0.55);
-  border: 1px solid var(--line-soft);
-  border-radius: 6px;
+  padding: 0;
+  background: transparent;
+  border: none;
 }
 .event-card-body p {
   margin: 0;
@@ -3136,17 +3178,15 @@ h2, h3, h4 { margin: 0; }
 }
 @media (max-width: 520px) {
   .event-card {
-    padding: 14px;
+    padding: 20px 20px 18px;
+    gap: 14px;
   }
   .event-card-top {
-    grid-template-columns: 46px 1fr;
-    gap: 12px;
-  }
-  .event-card-date {
-    min-height: 54px;
+    grid-template-columns: auto 1fr;
+    gap: 16px;
   }
   .event-card-date strong {
-    font-size: 21px;
+    font-size: 26px;
   }
   .event-card-head {
     flex-direction: column;
