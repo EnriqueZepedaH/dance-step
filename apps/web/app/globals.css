@@ -2555,14 +2555,15 @@ h2, h3, h4 { margin: 0; }
 }
 .scene-controls {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   align-items: center;
   flex-wrap: wrap;
   justify-content: space-between;
-  padding: 12px 14px;
-  background: var(--cream);
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  padding: 8px 0 14px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
 }
 .scene-view-nav {
   display: inline-flex;
@@ -2572,14 +2573,57 @@ h2, h3, h4 { margin: 0; }
   padding: 3px;
   gap: 2px;
 }
-/* City selector lives in its own section above the controls so it
-   reads as page-level context ("which city am I looking at?")
-   rather than a peer to view-mode + filter inputs. */
+/* ============================================================
+   Scene · Editorial dateline
+   ------------------------------------------------------------
+   The location and filter rows are treated as a magazine masthead:
+   serif display type, italic eyebrows, decorative ornaments, and
+   hairline rules instead of boxed-up form controls. The city
+   selector animates an underline reveal on hover/focus — a single
+   typographic gesture that does the work of a button.
+   ============================================================ */
 .scene-location {
   display: flex;
   align-items: baseline;
   gap: 14px;
   flex-wrap: wrap;
+  padding: 12px 0 18px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.scene-location::before {
+  content: "✻";
+  font-family: var(--font-display), "Fraunces", "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--terracotta);
+  align-self: center;
+  margin-right: 2px;
+}
+.scene-location-select {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+}
+/* Underline-reveal: animates from the left on hover/focus, like an
+   editorial section header coming alive. Stops short of the chevron
+   so the rule doesn't sit underneath the arrow. */
+.scene-location-select::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 22px;
+  bottom: -4px;
+  height: 2px;
+  background: var(--terracotta);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.scene-location-select:hover::after,
+.scene-location-select:focus-within::after {
+  transform: scaleX(1);
 }
 .scene-location-select select {
   appearance: none;
@@ -2607,7 +2651,7 @@ h2, h3, h4 { margin: 0; }
   outline: none;
 }
 .scene-location-select select option {
-  background: var(--cream);
+  background: var(--bone);
   color: var(--ink);
   font-family: inherit;
   font-size: 15px;
@@ -2631,9 +2675,11 @@ h2, h3, h4 { margin: 0; }
 }
 .scene-filter-row {
   display: flex;
-  gap: 16px;
-  align-items: center;
+  gap: 18px;
+  align-items: baseline;
   flex-wrap: wrap;
+  flex: 1;
+  justify-content: flex-end;
 }
 /* Mobile-only: the toggle collapses .scene-filters when it doesn't
    fit inline. On wider screens the filters render inline beside the
@@ -2654,9 +2700,34 @@ h2, h3, h4 { margin: 0; }
 }
 .scene-filters {
   display: flex;
-  gap: 16px;
+  gap: 0;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: baseline;
+}
+/* "Filter by —" eyebrow leads the dateline. Italic Fraunces ties it
+   visually to the city masthead above. Hidden on mobile because the
+   toggle button already labels the collapsed region. */
+.scene-filters::before {
+  content: "Filter by —";
+  font-family: var(--font-display), "Fraunces", "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--terracotta-deep);
+  margin-right: 12px;
+  white-space: nowrap;
+}
+/* Dot separator between consecutive filter selects. */
+.scene-filter + .scene-filter::before {
+  content: "·";
+  font: 500 14px/1 inherit;
+  color: var(--ink-mute);
+  margin-right: 10px;
+  align-self: baseline;
+}
+.scene-filter + .scene-filter {
+  margin-left: 10px;
 }
 @media (max-width: 720px) {
   .scene-filters {
@@ -2667,8 +2738,12 @@ h2, h3, h4 { margin: 0; }
     border-top: 1px solid var(--line-soft);
     padding-top: 12px;
     margin-top: 4px;
+    gap: 8px;
   }
   .scene-filters.is-open { display: flex; }
+  .scene-filters::before { display: none; }
+  .scene-filter + .scene-filter::before { display: none; }
+  .scene-filter + .scene-filter { margin-left: 0; }
 }
 .scene-filter {
   display: inline-flex;
@@ -2725,8 +2800,25 @@ h2, h3, h4 { margin: 0; }
   background: var(--bone);
   color: var(--ink);
 }
+/* Italic dateline byline: "12 events" with the numeral in Fraunces
+   roman and the noun in italic, like a magazine count tag. */
 .scene-count {
   margin-left: auto;
+  font-family: var(--font-display), "Fraunces", "Times New Roman", serif;
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--ink-mute);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.scene-count strong {
+  font-weight: 600;
+  font-style: normal;
+  color: var(--ink);
+}
+.scene-count em {
+  font-style: italic;
+  font-weight: 400;
 }
 
 /* List view ------------------------------------------------------ */

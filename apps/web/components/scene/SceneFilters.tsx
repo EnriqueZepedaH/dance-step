@@ -78,8 +78,9 @@ export function SceneFilters({
         ) : null}
       </div>
 
-      <div className="scene-count row-meta">
-        {count} {count === 1 ? "event" : "events"}
+      <div className="scene-count">
+        <strong>{count}</strong>{" "}
+        <em>{count === 1 ? "event" : "events"}</em>
       </div>
     </div>
   );
