@@ -165,10 +165,9 @@ export function SceneShell({
 
   return (
     <div className="scene-shell">
-      <div className="scene-controls">
-        <SceneViewNav view={view} onChange={setView} />
-        {cities.length > 1 ? (
-          <label className="scene-city-select">
+      {cities.length > 1 ? (
+        <section className="scene-location" aria-label="City">
+          <label className="scene-location-select">
             <span className="sr-only">City</span>
             <select
               value={city}
@@ -182,7 +181,11 @@ export function SceneShell({
               ))}
             </select>
           </label>
-        ) : null}
+        </section>
+      ) : null}
+
+      <div className="scene-controls">
+        <SceneViewNav view={view} onChange={setView} />
         <SceneFilters
           kind={kind}
           kinds={kinds}
