@@ -4,11 +4,15 @@ import { Show, UserButton } from "@clerk/nextjs";
 
 export type NavItem = { href: string; label: string };
 
+// Landing nav points directly to the three floors. Earlier version
+// mixed in-page anchors (#library, #scene, #lab, #manifesto), which
+// made the same header behave inconsistently — some links scrolled,
+// others routed. Anchor links to landing sections still exist on the
+// hero "tour" buttons; the top nav is reserved for floor navigation.
 const LANDING_NAV: NavItem[] = [
-  { href: "#library", label: "Library" },
-  { href: "#scene", label: "The Scene" },
-  { href: "#lab", label: "The Lab" },
-  { href: "#manifesto", label: "Manifesto" },
+  { href: "/library", label: "Library" },
+  { href: "/scene", label: "The Scene" },
+  { href: "/upload", label: "The Lab" },
 ];
 
 const APP_NAV: NavItem[] = [
