@@ -2609,16 +2609,23 @@ h2, h3, h4 { margin: 0; }
   align-items: center;
   flex-wrap: wrap;
 }
-.scene-filter-toggle {
-  padding: 6px 2px;
-  font: 500 13px/1 inherit;
-  letter-spacing: 0.02em;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  color: var(--ink);
+/* Mobile-only: the toggle collapses .scene-filters when it doesn't
+   fit inline. On wider screens the filters render inline beside the
+   count, so the toggle would be redundant — hide it. */
+.scene-filter-toggle { display: none; }
+@media (max-width: 720px) {
+  .scene-filter-toggle {
+    display: inline-block;
+    padding: 6px 2px;
+    font: 500 13px/1 inherit;
+    letter-spacing: 0.02em;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .scene-filter-toggle:hover { color: var(--terracotta-deep); }
 }
-.scene-filter-toggle:hover { color: var(--terracotta-deep); }
 .scene-filters {
   display: flex;
   gap: 16px;
